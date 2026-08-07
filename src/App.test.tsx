@@ -1,11 +1,13 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import App from './App'
 
-test('renders the app shell and the counter increments', () => {
+test('renders the app shell with dark mode toggle', () => {
   render(<App />)
-  expect(screen.getByRole('heading', { name: 'Get started' })).toBeTruthy()
 
-  const button = screen.getByRole('button', { name: /count is 0/i })
-  fireEvent.click(button)
-  expect(screen.getByRole('button', { name: /count is 1/i })).toBeTruthy()
+  expect(screen.getByRole('heading', { name: 'My Templates' })).toBeTruthy()
+  expect(screen.getByRole('button', { name: '+ Add Template' })).toBeTruthy()
+
+  const toggle = screen.getByRole('button', { name: 'Dark' })
+  fireEvent.click(toggle)
+  expect(document.documentElement.classList.contains('dark')).toBe(true)
 })
