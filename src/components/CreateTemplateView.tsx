@@ -1,33 +1,13 @@
-import { useState } from 'react';
+import { useState, useReducer } from 'react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
-import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
+import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+
+import { templateReducer } from '../reducers/templateReducer';
 
 interface CreateTemplateViewProps {
   onNavigate: (view: 'home' | 'create-template') => void;
 }
-
-type HeaderBlock = {
-  id: string;
-  type: 'header';
-  level: 1 | 2 | 3;
-  text: string;
-};
-
-type TextBlock = {
-  id: string;
-  type: 'text';
-  inputType: 'short' | 'long';
-  label: string;
-};
-
-type ParagraphBlock = {
-  id: string;
-  type: 'paragraph';
-  text: string;
-};
-
-type TemplateBlock = HeaderBlock | TextBlock | ParagraphBlock;
 
 function SortableBlockItem({ id, isEditing, children }: { id: string; isEditing: boolean; children: React.ReactNode }) {
   const {
@@ -66,7 +46,7 @@ function SortableBlockItem({ id, isEditing, children }: { id: string; isEditing:
 
 export function CreateTemplateView({ onNavigate }: CreateTemplateViewProps) {
   const [menuState, setMenuState] = useState<'closed' | 'main' | 'header' | 'text' | 'configure-header' | 'configure-text' | 'configure-paragraph'>('closed');
-  const [blocks, setBlocks] = useState<TemplateBlock[]>([]);
+  const [blocks, dispatch] = useReducer(templateReducer, []);
   const [editingBlockId, setEditingBlockId] = useState<string | null>(null);
   
   const [pendingHeaderLevel, setPendingHeaderLevel] = useState<1 | 2 | 3 | null>(null);
@@ -87,11 +67,9 @@ export function CreateTemplateView({ onNavigate }: CreateTemplateViewProps) {
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (over && active.id !== over.id) {
-      setBlocks((items) => {
-        const oldIndex = items.findIndex((i) => i.id === active.id);
-        const newIndex = items.findIndex((i) => i.id === over.id);
-        return arrayMove(items, oldIndex, newIndex);
-      });
+      const oldIndex = blocks.findIndex((i) => i.id === active.id);
+      const newIndex = blocks.findIndex((i) => i.id === over.id);
+      dispatch({ type: 'REORDER_BLOCKS', payload: { fromIndex: oldIndex, toIndex: newIndex } });
     }
   };
 
@@ -108,15 +86,15 @@ export function CreateTemplateView({ onNavigate }: CreateTemplateViewProps) {
 
   const handleTextSelect = (type: 'short' | 'short-label' | 'long' | 'long-label') => {
     if (type === 'short' || type === 'long') {
-      setBlocks([
-        ...blocks,
-        {
+      dispatch({
+        type: 'ADD_BLOCK',
+        payload: {
           id: crypto.randomUUID(),
           type: 'text',
           inputType: type,
           label: ''
         }
-      ]);
+      });
       setMenuState('closed');
     } else {
       setPendingTextType(type);
@@ -127,53 +105,51 @@ export function CreateTemplateView({ onNavigate }: CreateTemplateViewProps) {
 
   const confirmAddHeader = () => {
     if (!pendingBlockText.trim() || !pendingHeaderLevel) return;
-    setBlocks([
-      ...blocks,
-      {
+    dispatch({
+      type: 'ADD_BLOCK',
+      payload: {
         id: crypto.randomUUID(),
         type: 'header',
         level: pendingHeaderLevel,
         text: pendingBlockText.trim()
       }
-    ]);
+    });
     setMenuState('closed');
   };
 
   const confirmAddText = () => {
     if (!pendingBlockText.trim() || !pendingTextType) return;
-    setBlocks([
-      ...blocks,
-      {
+    dispatch({
+      type: 'ADD_BLOCK',
+      payload: {
         id: crypto.randomUUID(),
         type: 'text',
         inputType: pendingTextType === 'short-label' ? 'short' : 'long',
         label: pendingBlockText.trim()
       }
-    ]);
+    });
     setMenuState('closed');
   };
 
   const confirmAddParagraph = () => {
     if (!pendingBlockText.trim()) return;
-    setBlocks([
-      ...blocks,
-      {
+    dispatch({
+      type: 'ADD_BLOCK',
+      payload: {
         id: crypto.randomUUID(),
         type: 'paragraph',
         text: pendingBlockText.trim()
       }
-    ]);
+    });
     setMenuState('closed');
   };
 
   const handleSaveEdit = () => {
     if (!pendingBlockText.trim() || !editingBlockId) return;
-    setBlocks(blocks.map(b => {
-      if (b.id !== editingBlockId) return b;
-      if (b.type === 'header' || b.type === 'paragraph') return { ...b, text: pendingBlockText.trim() };
-      if (b.type === 'text') return { ...b, label: pendingBlockText.trim() };
-      return b;
-    }));
+    dispatch({
+      type: 'UPDATE_BLOCK',
+      payload: { id: editingBlockId, text: pendingBlockText.trim() }
+    });
     setEditingBlockId(null);
   };
 
@@ -312,7 +288,14 @@ export function CreateTemplateView({ onNavigate }: CreateTemplateViewProps) {
           const block = blocks.find(b => b.id === editingBlockId);
           if (!block) return null;
           return (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/20 dark:bg-black/40 backdrop-blur-sm">
+            <div 
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/20 dark:bg-black/40 backdrop-blur-sm"
+              onMouseDown={(e) => {
+                if (e.target === e.currentTarget) {
+                  setEditingBlockId(null);
+                }
+              }}
+            >
               <div className="w-full max-w-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200">
                 <div className="p-5 flex flex-col gap-4">
                   <div className="flex justify-between items-center">
@@ -321,7 +304,7 @@ export function CreateTemplateView({ onNavigate }: CreateTemplateViewProps) {
                     </label>
                     <button 
                       onClick={() => {
-                        setBlocks(blocks.filter(b => b.id !== block.id));
+                        dispatch({ type: 'DELETE_BLOCK', payload: { id: block.id } });
                         setEditingBlockId(null);
                       }}
                       className="cursor-pointer text-slate-400 hover:text-red-500 hover:bg-slate-100 dark:hover:bg-slate-700 p-1.5 rounded-lg transition-colors"
@@ -369,7 +352,14 @@ export function CreateTemplateView({ onNavigate }: CreateTemplateViewProps) {
       )}
       {/* Global Add Block Modal */}
       {menuState !== 'closed' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/20 dark:bg-black/40 backdrop-blur-sm">
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/20 dark:bg-black/40 backdrop-blur-sm"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) {
+              setMenuState('closed');
+            }
+          }}
+        >
           <div className="w-full max-w-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200">
             
             {/* Modal Header */}
