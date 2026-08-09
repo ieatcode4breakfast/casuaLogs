@@ -3,6 +3,8 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
+  --font-sans: "Quicksand", sans-serif;
+  --font-dynapuff: "DynaPuff", cursive;
   --color-maroon-50: #fdf2f2;
   --color-maroon-100: #f9d6d6;
   --color-maroon-200: #f0adad;
