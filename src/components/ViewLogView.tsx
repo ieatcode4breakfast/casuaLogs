@@ -126,7 +126,7 @@ export function ViewLogView({ onNavigate, logId }: ViewLogViewProps) {
           <button
             type="button"
             onClick={() => onNavigate('edit-log', logId)}
-            className="px-6 py-2.5 rounded-xl font-semibold bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 transition-colors"
+            className="cursor-pointer px-6 py-2.5 rounded-xl font-semibold bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 transition-colors"
           >
             Edit
           </button>
