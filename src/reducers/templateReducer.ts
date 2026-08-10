@@ -21,6 +21,7 @@ export type ParagraphBlock = {
 export type TemplateBlock = HeaderBlock | TextBlock | ParagraphBlock;
 
 export type TemplateAction =
+  | { type: 'SET_BLOCKS'; payload: TemplateBlock[] }
   | { type: 'ADD_BLOCK'; payload: TemplateBlock }
   | { type: 'UPDATE_BLOCK'; payload: { id: string; text: string } }
   | { type: 'DELETE_BLOCK'; payload: { id: string } }
@@ -28,6 +29,9 @@ export type TemplateAction =
 
 export function templateReducer(state: TemplateBlock[], action: TemplateAction): TemplateBlock[] {
   switch (action.type) {
+    case 'SET_BLOCKS':
+      return action.payload;
+      
     case 'ADD_BLOCK':
       return [...state, action.payload];
       

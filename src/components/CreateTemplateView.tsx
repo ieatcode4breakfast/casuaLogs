@@ -1,4 +1,5 @@
-import { useState, useReducer } from 'react';
+import { useState, useReducer, useEffect } from 'react';
+import { get, set } from 'idb-keyval';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
@@ -8,9 +9,10 @@ import { templateReducer } from '../reducers/templateReducer';
 
 interface CreateTemplateViewProps {
   onNavigate: (view: 'home' | 'create-template') => void;
+  editingTemplateId?: string | null;
 }
 
-function SortableBlockItem({ id, isEditing, children }: { id: string; isEditing: boolean; children: React.ReactNode }) {
+function SortableBlockItem({ id, isEditing, children }: { id: string; isEditing: boolean; children: (props: any) => React.ReactNode }) {
   const {
     attributes,
     listeners,
@@ -29,26 +31,17 @@ function SortableBlockItem({ id, isEditing, children }: { id: string; isEditing:
 
   return (
     <div ref={setNodeRef} style={style} className={`relative w-full group ${isDragging ? 'opacity-50' : ''}`}>
-      {!isEditing && (
-        <div 
-          ref={setActivatorNodeRef} 
-          {...attributes} 
-          {...listeners} 
-          className="absolute -left-6 top-1/2 -translate-y-1/2 p-1 cursor-grab active:cursor-grabbing touch-none text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 z-10 flex items-center justify-center outline-none"
-          aria-label="Drag to reorder"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="12" r="1.5"/><circle cx="9" cy="5" r="1.5"/><circle cx="9" cy="19" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="15" cy="5" r="1.5"/><circle cx="15" cy="19" r="1.5"/></svg>
-        </div>
-      )}
-      {children}
+      {children({ setActivatorNodeRef, attributes, listeners })}
     </div>
   );
 }
 
-export function CreateTemplateView({ onNavigate }: CreateTemplateViewProps) {
+export function CreateTemplateView({ onNavigate, editingTemplateId }: CreateTemplateViewProps) {
   const [menuState, setMenuState] = useState<'closed' | 'main' | 'header' | 'text' | 'configure-header' | 'configure-text' | 'configure-paragraph'>('closed');
   const [blocks, dispatch] = useReducer(templateReducer, []);
   const [editingBlockId, setEditingBlockId] = useState<string | null>(null);
+  const [templateName, setTemplateName] = useState('');
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
   
   const [pendingHeaderLevel, setPendingHeaderLevel] = useState<1 | 2 | 3 | null>(null);
   const [pendingTextType, setPendingTextType] = useState<'short' | 'short-label' | 'long' | 'long-label' | null>(null);
@@ -64,6 +57,19 @@ export function CreateTemplateView({ onNavigate }: CreateTemplateViewProps) {
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
+
+  useEffect(() => {
+    if (editingTemplateId) {
+      get('templates').then((templates: any[]) => {
+        if (!templates) return;
+        const template = templates.find(t => t.id === editingTemplateId);
+        if (template) {
+          setTemplateName(template.name);
+          dispatch({ type: 'SET_BLOCKS', payload: template.blocks });
+        }
+      });
+    }
+  }, [editingTemplateId]);
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -154,6 +160,47 @@ export function CreateTemplateView({ onNavigate }: CreateTemplateViewProps) {
     setEditingBlockId(null);
   };
 
+  const handleSaveTemplate = async () => {
+    if (!templateName.trim()) {
+      setToastMessage("Please enter a template name");
+      setTimeout(() => setToastMessage(null), 3000);
+      return;
+    }
+    if (blocks.length === 0) {
+      setToastMessage("Please add at least one block");
+      setTimeout(() => setToastMessage(null), 3000);
+      return;
+    }
+    
+    try {
+      const existing = (await get('templates')) || [];
+      
+      if (editingTemplateId) {
+        const index = existing.findIndex((t: any) => t.id === editingTemplateId);
+        if (index !== -1) {
+          existing[index] = {
+            ...existing[index],
+            name: templateName.trim(),
+            blocks
+          };
+        }
+      } else {
+        const newTemplate = {
+          id: crypto.randomUUID(),
+          name: templateName.trim(),
+          createdAt: new Date().toISOString(),
+          blocks
+        };
+        existing.push(newTemplate);
+      }
+      
+      await set('templates', existing);
+      onNavigate('home');
+    } catch (e) {
+      console.error('Failed to save template', e);
+    }
+  };
+
   return (
     <main className="max-w-3xl mx-auto md:px-6 py-6 md:py-12 flex flex-col min-h-[80vh]">
       <div className="flex items-center gap-4 px-6 md:px-0 mb-6 md:mb-8">
@@ -174,12 +221,14 @@ export function CreateTemplateView({ onNavigate }: CreateTemplateViewProps) {
 
         {/* Template Title Input */}
         <div className="mb-2">
-          <label htmlFor="template-title" className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-            Title
+          <label htmlFor="template-name" className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+            Template Name
           </label>
           <input
             type="text"
-            id="template-title"
+            id="template-name"
+            value={templateName}
+            onChange={(e) => setTemplateName(e.target.value)}
             placeholder="e.g. Daily Workout, Meeting Notes..."
             className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all font-medium placeholder:text-slate-400 dark:placeholder:text-slate-500"
           />
@@ -198,57 +247,70 @@ export function CreateTemplateView({ onNavigate }: CreateTemplateViewProps) {
                 <SortableContext items={blocks.map(b => b.id)} strategy={verticalListSortingStrategy}>
                   {blocks.map(block => (
                     <SortableBlockItem key={block.id} id={block.id} isEditing={editingBlockId === block.id}>
-                      <div 
-                        onClick={() => {
-                          if (block.type === 'header') {
-                            setEditingBlockId(block.id);
-                            setPendingBlockText(block.text);
-                            setPendingHeaderLevel(block.level);
-                            setMenuState('closed');
-                          } else if (block.type === 'text') {
-                            setEditingBlockId(block.id);
-                            setPendingBlockText(block.label);
-                            setPendingTextType(block.inputType);
-                            setMenuState('closed');
-                          } else if (block.type === 'paragraph') {
-                            setEditingBlockId(block.id);
-                            setPendingBlockText(block.text);
-                            setMenuState('closed');
-                          }
-                        }}
-                        className={`flex flex-col gap-2 transition-all border border-transparent cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-lg -mx-4 px-4 w-full ${block.type === 'header' ? 'pt-6' : 'pt-2'}`}
-                      >
-                        {block.type === 'header' && (
-                          <div className={`w-full wrap-break-word whitespace-pre-wrap text-slate-900 dark:text-white ${block.level === 1 ? 'text-3xl font-black tracking-tight' : block.level === 2 ? 'text-2xl font-bold tracking-tight' : 'text-xl font-bold'}`}>
-                            {block.text}
-                          </div>
-                        )}
-                        {block.type === 'paragraph' && (
-                          <div className="w-full wrap-break-word whitespace-pre-wrap text-slate-700 dark:text-slate-300 text-sm md:text-base leading-relaxed">
-                            {block.text}
-                          </div>
-                        )}
-                        {block.type === 'text' && (
-                          <div className="w-full flex flex-col gap-2 pointer-events-none">
-                            {block.label && (
-                              <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1 wrap-break-word whitespace-pre-wrap w-full">
-                                {block.label}
-                              </label>
-                            )}
-                            {block.inputType === 'short' ? (
-                              <div className="w-full h-11 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center px-4">
-                                <span className="text-slate-400 text-sm">Short text answer...</span>
-                              </div>
-                            ) : (
-                              <div className="w-full h-24 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex">
-                                <span className="text-slate-400 text-sm">Long text answer...</span>
+                      {(dragProps: any) => (
+                        <div 
+                          onClick={() => {
+                            if (block.type === 'header') {
+                              setEditingBlockId(block.id);
+                              setPendingBlockText(block.text);
+                              setPendingHeaderLevel(block.level);
+                              setMenuState('closed');
+                            } else if (block.type === 'text') {
+                              setEditingBlockId(block.id);
+                              setPendingBlockText(block.label);
+                              setPendingTextType(block.inputType);
+                              setMenuState('closed');
+                            } else if (block.type === 'paragraph') {
+                              setEditingBlockId(block.id);
+                              setPendingBlockText(block.text);
+                              setMenuState('closed');
+                            }
+                          }}
+                          className={`flex items-start transition-all border border-transparent cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-lg -mx-4 px-2 md:px-4 w-full ${block.type === 'header' ? 'pt-6' : 'pt-2'}`}
+                        >
+                          {editingBlockId !== block.id && (
+                            <div 
+                              ref={dragProps.setActivatorNodeRef} 
+                              {...dragProps.attributes} 
+                              {...dragProps.listeners} 
+                              className={`shrink-0 p-1 mr-2 cursor-grab active:cursor-grabbing touch-none text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 z-10 flex items-center justify-center outline-none ${block.type === 'header' ? (block.level === 1 ? 'mt-1' : 'mt-0.5') : 'mt-0'}`}
+                              aria-label="Drag to reorder"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="12" r="1.5"/><circle cx="9" cy="5" r="1.5"/><circle cx="9" cy="19" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="15" cy="5" r="1.5"/><circle cx="15" cy="19" r="1.5"/></svg>
+                            </div>
+                          )}
+                          <div className="flex flex-col gap-2 w-full">
+                            {block.type === 'header' && (
+                              <div className={`w-full wrap-break-word whitespace-pre-wrap text-slate-900 dark:text-white ${block.level === 1 ? 'text-3xl font-black tracking-tight' : block.level === 2 ? 'text-2xl font-bold tracking-tight' : 'text-xl font-bold'}`}>
+                                {block.text}
                               </div>
                             )}
+                            {block.type === 'paragraph' && (
+                              <div className="w-full wrap-break-word whitespace-pre-wrap text-slate-700 dark:text-slate-300 text-sm md:text-base leading-relaxed">
+                                {block.text}
+                              </div>
+                            )}
+                            {block.type === 'text' && (
+                              <div className="w-full flex flex-col gap-2 pointer-events-none">
+                                {block.label && (
+                                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1 wrap-break-word whitespace-pre-wrap w-full">
+                                    {block.label}
+                                  </label>
+                                )}
+                                {block.inputType === 'short' ? (
+                                  <div className="w-full h-11 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center px-4">
+                                    <span className="text-slate-400 text-sm">Short text answer...</span>
+                                  </div>
+                                ) : (
+                                  <div className="w-full h-24 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex">
+                                    <span className="text-slate-400 text-sm">Long text answer...</span>
+                                  </div>
+                                )}
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
-
-
+                        </div>
+                      )}
                     </SortableBlockItem>
                   ))}
                 </SortableContext>
@@ -274,7 +336,12 @@ export function CreateTemplateView({ onNavigate }: CreateTemplateViewProps) {
         <div className="flex justify-end pt-4 border-t border-slate-200 dark:border-slate-800">
           <button
             type="button"
-            className="cursor-pointer group relative inline-flex items-center gap-2 px-8 py-3.5 text-sm font-semibold rounded-xl bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 overflow-hidden transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/30 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 active:scale-95"
+            onClick={handleSaveTemplate}
+            className={`group relative inline-flex items-center gap-2 px-8 py-3.5 text-sm font-semibold rounded-xl bg-blue-600 text-white dark:bg-blue-500 overflow-hidden transition-all duration-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 ${
+              !templateName.trim() || blocks.length === 0
+                ? 'opacity-50 cursor-not-allowed'
+                : 'cursor-pointer hover:bg-blue-700 dark:hover:bg-blue-400 hover:shadow-lg hover:shadow-blue-500/30 active:scale-95'
+            }`}
           >
             <span>Save Template</span>
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" /><polyline points="17 21 17 13 7 13 7 21" /><polyline points="7 3 7 8 15 8" /></svg>
@@ -315,25 +382,31 @@ export function CreateTemplateView({ onNavigate }: CreateTemplateViewProps) {
                     </button>
                   </div>
                   {block.type === 'paragraph' ? (
-                    <textarea 
-                      maxLength={1000}
-                      value={pendingBlockText}
-                      onChange={e => setPendingBlockText(e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 min-h-25 resize-none"
-                      autoFocus
-                      placeholder="Enter text..."
-                    />
+                    <>
+                      <textarea 
+                        maxLength={1000}
+                        value={pendingBlockText}
+                        onChange={e => setPendingBlockText(e.target.value)}
+                        className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 min-h-25 resize-none"
+                        autoFocus
+                        placeholder="Enter text..."
+                      />
+                      <div className="text-xs text-right text-slate-400 -mt-2">{pendingBlockText.length}/1000</div>
+                    </>
                   ) : (
-                    <input 
-                      type="text" 
-                      maxLength={50}
-                      value={pendingBlockText}
-                      onChange={e => setPendingBlockText(e.target.value)}
-                      onKeyDown={e => e.key === 'Enter' && handleSaveEdit()}
-                      className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                      autoFocus
-                      placeholder={block.type === 'header' ? "Enter header text..." : "Enter label..."}
-                    />
+                    <>
+                      <input 
+                        type="text" 
+                        maxLength={50}
+                        value={pendingBlockText}
+                        onChange={e => setPendingBlockText(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && handleSaveEdit()}
+                        className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                        autoFocus
+                        placeholder={block.type === 'header' ? "Enter header text..." : "Enter label..."}
+                      />
+                      <div className="text-xs text-right text-slate-400 -mt-2">{pendingBlockText.length}/50</div>
+                    </>
                   )}
                   <div className="flex justify-end gap-3 mt-2">
                     <button onClick={() => setEditingBlockId(null)} className="cursor-pointer px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors">Cancel</button>
@@ -418,6 +491,7 @@ export function CreateTemplateView({ onNavigate }: CreateTemplateViewProps) {
                     autoFocus
                     placeholder="Enter header text..."
                   />
+                  <div className="text-xs text-right text-slate-400 -mt-2">{pendingBlockText.length}/50</div>
                   <div className="flex justify-end gap-3 mt-2">
                     <button onClick={() => setMenuState('header')} className="cursor-pointer px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors">Back</button>
                     <button 
@@ -436,19 +510,19 @@ export function CreateTemplateView({ onNavigate }: CreateTemplateViewProps) {
                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg> Back
                   </button>
                   <button onClick={() => handleTextSelect('short')} className="px-5 py-4 text-left text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors flex flex-col gap-1 text-slate-700 dark:text-slate-200 cursor-pointer">
-                    <span>Short Text</span>
+                    <span>Short Text Input</span>
                     <span className="text-xs text-slate-500 dark:text-slate-400 font-normal">No label</span>
                   </button>
                   <button onClick={() => handleTextSelect('short-label')} className="px-5 py-4 text-left text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors border-t border-slate-100 dark:border-slate-700/50 flex flex-col gap-1 text-slate-700 dark:text-slate-200 cursor-pointer">
-                    <span>Short Text with Label</span>
+                    <span>Short Text Input with Label</span>
                     <span className="text-xs text-slate-500 dark:text-slate-400 font-normal">Max 50 characters</span>
                   </button>
                   <button onClick={() => handleTextSelect('long')} className="px-5 py-4 text-left text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors border-t border-slate-100 dark:border-slate-700/50 flex flex-col gap-1 text-slate-700 dark:text-slate-200 cursor-pointer">
-                    <span>Long Text</span>
+                    <span>Long Text Input</span>
                     <span className="text-xs text-slate-500 dark:text-slate-400 font-normal">No label</span>
                   </button>
                   <button onClick={() => handleTextSelect('long-label')} className="px-5 py-4 text-left text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors border-t border-slate-100 dark:border-slate-700/50 flex flex-col gap-1 text-slate-700 dark:text-slate-200 cursor-pointer">
-                    <span>Long Text with Label</span>
+                    <span>Long Text Input with Label</span>
                     <span className="text-xs text-slate-500 dark:text-slate-400 font-normal">Max 1000 characters</span>
                   </button>
                 </>
@@ -468,6 +542,7 @@ export function CreateTemplateView({ onNavigate }: CreateTemplateViewProps) {
                     autoFocus
                     placeholder="e.g. Notes, Age..."
                   />
+                  <div className="text-xs text-right text-slate-400 -mt-2">{pendingBlockText.length}/50</div>
                   <div className="flex justify-end gap-3 mt-2">
                     <button onClick={() => setMenuState('text')} className="cursor-pointer px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors">Back</button>
                     <button 
@@ -507,6 +582,15 @@ export function CreateTemplateView({ onNavigate }: CreateTemplateViewProps) {
                 </div>
               )}
             </div>
+          </div>
+        </div>
+      )}
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-100 animate-in fade-in slide-in-from-bottom-4 duration-300 pointer-events-none w-max max-w-[calc(100vw-2rem)]">
+          <div className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-6 py-3.5 rounded-xl shadow-xl shadow-black/20 font-medium text-sm flex items-center gap-3 pointer-events-auto">
+            <svg className="shrink-0" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span className="truncate">{toastMessage}</span>
           </div>
         </div>
       )}

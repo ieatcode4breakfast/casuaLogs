@@ -6,6 +6,7 @@ export type ViewState = 'home' | 'create-template';
 
 function App() {
   const [currentView, setCurrentView] = useState<ViewState>('home')
+  const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null)
   
   const [dark, setDark] = useState(() => {
     const stored = localStorage.getItem('theme')
@@ -19,12 +20,21 @@ function App() {
     localStorage.setItem('theme', dark ? 'dark' : 'light')
   }, [dark])
 
+  const handleNavigate = (view: ViewState, id?: string) => {
+    setCurrentView(view)
+    if (view === 'create-template') {
+      setEditingTemplateId(id || null)
+    } else {
+      setEditingTemplateId(null)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans selection:bg-blue-200 dark:selection:bg-blue-800 transition-colors duration-300 select-none">
       <header className="sticky top-0 z-10 backdrop-blur-md bg-white/70 dark:bg-slate-950/70 border-b border-slate-200/50 dark:border-slate-800/50 px-8 py-4 flex items-center justify-between shadow-sm">
         <div 
           className="flex items-center gap-3 cursor-pointer group"
-          onClick={() => setCurrentView('home')}
+          onClick={() => handleNavigate('home')}
         >
           <h1 className="font-dynapuff text-2xl font-bold tracking-tight text-blue-700 dark:text-blue-400 group-hover:text-blue-600 dark:group-hover:text-blue-300 transition-colors">
             casuaLogs
@@ -44,8 +54,8 @@ function App() {
         </button>
       </header>
 
-      {currentView === 'home' && <HomeView onNavigate={setCurrentView} />}
-      {currentView === 'create-template' && <CreateTemplateView onNavigate={setCurrentView} />}
+      {currentView === 'home' && <HomeView onNavigate={handleNavigate} />}
+      {currentView === 'create-template' && <CreateTemplateView onNavigate={handleNavigate} editingTemplateId={editingTemplateId} />}
     </div>
   )
 }
