@@ -9,7 +9,7 @@ interface HomeViewProps {
   onTabChange: (tab: 'logs' | 'templates') => void;
 }
 
-type SortOption = 'last-modified' | 'name';
+type SortOption = 'last-modified' | 'created' | 'name';
 
 export function HomeView({ onNavigate, currentTab, onTabChange }: HomeViewProps) {
   const [templates, setTemplates] = useState<any[]>([]);
@@ -45,14 +45,22 @@ export function HomeView({ onNavigate, currentTab, onTabChange }: HomeViewProps)
   };
 
   const sortedLogs = [...logs].sort((a, b) => {
+    if (sortOption === 'created') {
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    }
+    const aTime = new Date(a.updatedAt || a.createdAt).getTime();
+    const bTime = new Date(b.updatedAt || b.createdAt).getTime();
     if (sortOption === 'name') {
       const nameCmp = (a.title || getLogPreview(a)).localeCompare(b.title || getLogPreview(b));
-      return nameCmp !== 0 ? nameCmp : new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      return nameCmp !== 0 ? nameCmp : bTime - aTime;
     }
-    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    return bTime - aTime;
   });
 
   const sortedTemplates = [...templates].sort((a, b) => {
+    if (sortOption === 'created') {
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    }
     if (sortOption === 'name') {
       const nameCmp = a.name.localeCompare(b.name);
       if (nameCmp !== 0) return nameCmp;
@@ -135,8 +143,9 @@ export function HomeView({ onNavigate, currentTab, onTabChange }: HomeViewProps)
               </button>
               <div className="flex items-center gap-2">
                 <label htmlFor="sort-logs" className="text-sm font-semibold text-slate-500">Sort by:</label>
-                <select id="sort-logs" value={sortOption} onChange={(e) => setSortOption(e.target.value as SortOption)} className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500/50 cursor-pointer">
+                <select id="sort-logs" value={sortOption} onChange={(e) => setSortOption(e.target.value as SortOption)} className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm rounded-lg py-1 focus:outline-none focus:ring-2 focus:ring-blue-500/50 cursor-pointer">
                   <option value="last-modified">Last Modified</option>
+                  <option value="created">Created Date</option>
                   <option value="name">Name</option>
                 </select>
               </div>
@@ -151,7 +160,8 @@ export function HomeView({ onNavigate, currentTab, onTabChange }: HomeViewProps)
                     title={preview}
                     onClick={() => onNavigate('view-log', log.id)}
                     color="blue"
-                    date={`Last modified: ${new Date(log.createdAt).toLocaleDateString()}`}
+                    createdAt={log.createdAt}
+                    updatedAt={log.updatedAt || log.createdAt}
                   />
                 );
               })}
@@ -191,8 +201,9 @@ export function HomeView({ onNavigate, currentTab, onTabChange }: HomeViewProps)
             </button>
             <div className="flex items-center gap-2">
               <label htmlFor="sort-templates" className="text-sm font-semibold text-slate-500">Sort by:</label>
-              <select id="sort-templates" value={sortOption} onChange={(e) => setSortOption(e.target.value as SortOption)} className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500/50 cursor-pointer">
+              <select id="sort-templates" value={sortOption} onChange={(e) => setSortOption(e.target.value as SortOption)} className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm rounded-lg py-1 focus:outline-none focus:ring-2 focus:ring-blue-500/50 cursor-pointer">
                 <option value="last-modified">Last Modified</option>
+                <option value="created">Created Date</option>
                 <option value="name">Name</option>
               </select>
             </div>
@@ -206,7 +217,8 @@ export function HomeView({ onNavigate, currentTab, onTabChange }: HomeViewProps)
                 onClick={() => onNavigate('create-template', template.id)}
                 color="green"
                 leftFooterNode={`${template.blocks.length} block${template.blocks.length !== 1 ? 's' : ''}`}
-                date={`Last modified: ${new Date(template.updatedAt || template.createdAt).toLocaleDateString()}`}
+                createdAt={template.createdAt}
+                updatedAt={template.updatedAt || template.createdAt}
               />
             ))}
           </div>

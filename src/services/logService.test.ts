@@ -29,6 +29,8 @@ describe('logService', () => {
     expect(setCall[1][0].blocks).toEqual(logBlocks);
     expect(setCall[1][0].id).toBeDefined();
     expect(setCall[1][0].createdAt).toBeDefined();
+    expect(setCall[1][0].updatedAt).toBeDefined();
+    expect(setCall[1][0].updatedAt).toBe(setCall[1][0].createdAt); // Equal on creation
     // No templateId reference
     expect(setCall[1][0].templateId).toBeUndefined();
   });
@@ -82,6 +84,7 @@ describe('logService', () => {
     expect(updatedLogs).toHaveLength(1);
     expect(updatedLogs[0].id).toBe('log-123'); // ID unchanged
     expect(updatedLogs[0].createdAt).toBe('2023-01-01T00:00:00.000Z'); // Created at unchanged
+    expect(updatedLogs[0].updatedAt).toBeDefined(); // Updated at set on edit
     expect(updatedLogs[0].title).toBe('Updated Title'); // Title updated
     expect(updatedLogs[0].blocks[0].text).toBe('New content'); // Blocks updated
   });

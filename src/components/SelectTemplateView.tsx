@@ -7,7 +7,7 @@ interface SelectTemplateViewProps {
   onNavigate: (view: 'home' | 'create-template' | 'create-log', id?: string) => void;
 }
 
-type SortOption = 'last-modified' | 'name';
+type SortOption = 'last-modified' | 'created' | 'name';
 
 export function SelectTemplateView({ onNavigate }: SelectTemplateViewProps) {
   const [templates, setTemplates] = useState<Template[]>([]);
@@ -31,6 +31,9 @@ export function SelectTemplateView({ onNavigate }: SelectTemplateViewProps) {
   }, []);
 
   const sortedTemplates = [...templates].sort((a, b) => {
+    if (sortOption === 'created') {
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    }
     if (sortOption === 'name') {
       const nameCmp = a.name.localeCompare(b.name);
       if (nameCmp !== 0) return nameCmp;
@@ -87,8 +90,9 @@ export function SelectTemplateView({ onNavigate }: SelectTemplateViewProps) {
           <div className="flex justify-end items-center px-4 md:px-0">
             <div className="flex items-center gap-2">
               <label htmlFor="sort-select-template" className="text-sm font-semibold text-slate-500">Sort by:</label>
-              <select id="sort-select-template" value={sortOption} onChange={(e) => setSortOption(e.target.value as SortOption)} className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500/50 cursor-pointer">
+              <select id="sort-select-template" value={sortOption} onChange={(e) => setSortOption(e.target.value as SortOption)} className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm rounded-lg py-1 focus:outline-none focus:ring-2 focus:ring-blue-500/50 cursor-pointer">
                 <option value="last-modified">Last Modified</option>
+                <option value="created">Created Date</option>
                 <option value="name">Name</option>
               </select>
             </div>
@@ -100,7 +104,8 @@ export function SelectTemplateView({ onNavigate }: SelectTemplateViewProps) {
                 title={template.name}
                 onClick={() => onNavigate('create-log', template.id)}
                 color="blue"
-                date={`Last modified: ${new Date(template.updatedAt || template.createdAt).toLocaleDateString()}`}
+                createdAt={template.createdAt}
+                updatedAt={template.updatedAt || template.createdAt}
               />
             ))}
           </div>

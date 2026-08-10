@@ -28,6 +28,7 @@ export interface Log {
   id: string;
   title: string;
   createdAt: string;
+  updatedAt?: string;
   blocks: LogBlock[];
 }
 
@@ -79,7 +80,8 @@ export async function saveLog(payload: SaveLogPayload): Promise<void> {
       existing[index] = {
         ...existing[index],
         title: trimmedTitle,
-        blocks
+        blocks,
+        updatedAt: getUtcTimestamp()
       };
       await set('logs', existing);
       return;
@@ -91,6 +93,7 @@ export async function saveLog(payload: SaveLogPayload): Promise<void> {
     id: crypto.randomUUID(),
     title: trimmedTitle,
     createdAt: timestamp,
+    updatedAt: timestamp,
     blocks
   };
   
