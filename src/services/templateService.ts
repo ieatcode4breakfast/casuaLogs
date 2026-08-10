@@ -27,7 +27,7 @@ export async function saveTemplate(payload: SaveTemplatePayload): Promise<void> 
 
   // 1. Schema Validation
   if (!trimmedName) {
-    throw new Error('Template name is required and cannot be empty.');
+    throw new Error('Template name is required.');
   }
   if (trimmedName.length > 100) {
     throw new Error('Template name cannot exceed 100 characters.');

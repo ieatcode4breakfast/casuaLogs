@@ -39,7 +39,7 @@ describe('templateService', () => {
   describe('Validation', () => {
     it('throws if template name is empty', async () => {
       await expect(saveTemplate({ name: '   ', blocks: [{ id: '1', type: 'paragraph', text: 'hi' }] }))
-        .rejects.toThrow('Template name is required and cannot be empty.');
+        .rejects.toThrow('Template name is required.');
     });
 
     it('throws if template name exceeds 100 characters', async () => {
