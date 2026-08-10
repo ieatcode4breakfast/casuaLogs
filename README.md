@@ -1,2 +1,2 @@
 # casualogs
-casualogs is a lightweight template builder that streamlines routine data entry. Users can easily set up custom forms with predefined fields—such as text inputs, radio buttons, and checkboxes—and reuse them anytime to generate perfectly formatted information ready to copy and paste, eliminating repetitive typing and manual formatting.
+casualogs is a local-first, template-driven data entry app. Users build reusable templates from headers, text fields, paragraphs, and checklists (arranged via drag-and-drop), then fill them out as logs they can view, edit, sort, and delete. Everything is validated and stored locally in the browser via IndexedDB, so it works fully offline — no account or backend required.
