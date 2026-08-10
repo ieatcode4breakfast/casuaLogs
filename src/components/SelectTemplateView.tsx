@@ -87,7 +87,15 @@ export function SelectTemplateView({ onNavigate }: SelectTemplateViewProps) {
         </div>
       ) : (
         <div className="w-full flex flex-col gap-4">
-          <div className="flex justify-end items-center px-4 md:px-0">
+          <div className="flex justify-between items-center px-6 md:px-0">
+            <button
+              type="button"
+              onClick={() => onNavigate('create-template')}
+              className="cursor-pointer group relative inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-xl bg-green-600 text-white hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-400 overflow-hidden transition-all duration-300 shadow-md shadow-green-500/20 active:scale-95"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <span>New</span>
+            </button>
             <div className="flex items-center gap-2">
               <label htmlFor="sort-select-template" className="text-sm font-semibold text-slate-500">Sort by:</label>
               <select id="sort-select-template" value={sortOption} onChange={(e) => setSortOption(e.target.value as SortOption)} className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm rounded-lg py-1 focus:outline-none focus:ring-2 focus:ring-blue-500/50 cursor-pointer">

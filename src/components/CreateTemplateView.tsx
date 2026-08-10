@@ -10,8 +10,9 @@ import { saveTemplate, deleteTemplate } from '../services/templateService';
 import { ViewHeader } from './ViewHeader';
 
 interface CreateTemplateViewProps {
-  onNavigate: (view: 'home' | 'create-template') => void;
+  onNavigate: (view: 'home' | 'create-template' | 'create-log', id?: string) => void;
   editingTemplateId?: string | null;
+  intent?: 'home' | 'create-log';
 }
 
 function SortableBlockItem({ id, isEditing, children }: { id: string; isEditing: boolean; children: (props: any) => React.ReactNode }) {
@@ -38,8 +39,8 @@ function SortableBlockItem({ id, isEditing, children }: { id: string; isEditing:
   );
 }
 
-export function CreateTemplateView({ onNavigate, editingTemplateId }: CreateTemplateViewProps) {
-  const [menuState, setMenuState] = useState<'closed' | 'main' | 'header' | 'text' | 'configure-header' | 'configure-text' | 'configure-paragraph'>('closed');
+export function CreateTemplateView({ onNavigate, editingTemplateId, intent = 'home' }: CreateTemplateViewProps) {
+  const [menuState, setMenuState] = useState<'closed' | 'main' | 'header' | 'text' | 'configure-header' | 'configure-text' | 'configure-paragraph' | 'checklist' | 'configure-checklist'>('closed');
   const [blocks, dispatch] = useReducer(templateReducer, []);
   const [editingBlockId, setEditingBlockId] = useState<string | null>(null);
   const [templateName, setTemplateName] = useState('');
@@ -49,6 +50,7 @@ export function CreateTemplateView({ onNavigate, editingTemplateId }: CreateTemp
   const [pendingHeaderLevel, setPendingHeaderLevel] = useState<1 | 2 | 3 | null>(null);
   const [pendingTextType, setPendingTextType] = useState<'short' | 'short-label' | 'long' | 'long-label' | null>(null);
   const [pendingBlockText, setPendingBlockText] = useState('');
+  const [pendingBlockLabel, setPendingBlockLabel] = useState('');
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -157,9 +159,40 @@ export function CreateTemplateView({ onNavigate, editingTemplateId }: CreateTemp
     setMenuState('closed');
   };
 
+  const handleChecklistSelect = () => {
+    setPendingBlockLabel('');
+    setPendingBlockText('');
+    setMenuState('configure-checklist');
+  };
+
+  const confirmAddChecklist = () => {
+    const items = pendingBlockText.split('\n').map(i => i.trim()).filter(i => i.length > 0);
+    if (items.length === 0) return;
+    dispatch({
+      type: 'ADD_BLOCK',
+      payload: {
+        id: crypto.randomUUID(),
+        type: 'checklist',
+        label: pendingBlockLabel.trim(),
+        items
+      }
+    });
+    setMenuState('closed');
+  };
+
   const handleSaveEdit = () => {
     if (!editingBlockId) return;
     const block = blocks.find(b => b.id === editingBlockId);
+    if (block?.type === 'checklist') {
+      const items = pendingBlockText.split('\n').map(i => i.trim()).filter(i => i.length > 0);
+      if (items.length === 0) return;
+      dispatch({
+        type: 'UPDATE_BLOCK',
+        payload: { id: editingBlockId, text: pendingBlockLabel.trim(), items }
+      });
+      setEditingBlockId(null);
+      return;
+    }
     if (block?.type !== 'text' && !pendingBlockText.trim()) return;
     dispatch({
       type: 'UPDATE_BLOCK',
@@ -170,12 +203,12 @@ export function CreateTemplateView({ onNavigate, editingTemplateId }: CreateTemp
 
   const handleSaveTemplate = async () => {
     try {
-      await saveTemplate({
+      const savedId = await saveTemplate({
         name: templateName,
         blocks,
         editingId: editingTemplateId
       });
-      onNavigate('home');
+      onNavigate(intent, intent === 'create-log' ? savedId : undefined);
     } catch (e: any) {
       setToastMessage(e.message || "Failed to save template");
       setTimeout(() => setToastMessage(null), 3000);
@@ -237,6 +270,11 @@ export function CreateTemplateView({ onNavigate, editingTemplateId }: CreateTemp
                               setEditingBlockId(block.id);
                               setPendingBlockText(block.text);
                               setMenuState('closed');
+                            } else if (block.type === 'checklist') {
+                              setEditingBlockId(block.id);
+                              setPendingBlockLabel(block.label);
+                              setPendingBlockText(block.items.join('\n'));
+                              setMenuState('closed');
                             }
                           }}
                           className={`flex items-start transition-all border border-transparent cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-xl w-full py-2`}
@@ -275,6 +313,23 @@ export function CreateTemplateView({ onNavigate, editingTemplateId }: CreateTemp
                                 ) : (
                                   <div className="w-full h-24 bg-slate-50/50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 rounded-xl"></div>
                                 )}
+                              </div>
+                            )}
+                            {block.type === 'checklist' && (
+                              <div className="w-full flex flex-col gap-2 pointer-events-none min-w-0">
+                                {block.label && (
+                                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1 wrap-break-word whitespace-pre-wrap w-full">
+                                    {block.label}
+                                  </label>
+                                )}
+                                <div className="flex flex-col gap-1.5">
+                                  {block.items.map((item, i) => (
+                                    <div key={i} className="flex items-center gap-2.5 bg-slate-50/50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2">
+                                      <div className="w-4 h-4 shrink-0 rounded border-2 border-slate-300 dark:border-slate-600"></div>
+                                      <span className="text-sm text-slate-600 dark:text-slate-300 truncate">{item}</span>
+                                    </div>
+                                  ))}
+                                </div>
                               </div>
                             )}
                           </div>
@@ -349,7 +404,7 @@ export function CreateTemplateView({ onNavigate, editingTemplateId }: CreateTemp
                 <div className="p-5 flex flex-col gap-4 overflow-y-auto min-h-0">
                   <div className="flex justify-between items-center">
                     <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                      {block.type === 'header' ? `Edit Header ${block.level}` : block.type === 'paragraph' ? 'Edit Text' : `Edit ${block.inputType === 'short' ? 'Short' : 'Long'} Text Label`}
+                      {block.type === 'header' ? `Edit Header ${block.level}` : block.type === 'paragraph' ? 'Edit Text' : block.type === 'checklist' ? 'Edit Checklist' : `Edit ${block.inputType === 'short' ? 'Short' : 'Long'} Text Label`}
                     </label>
                     <button 
                       onClick={() => {
@@ -386,6 +441,27 @@ export function CreateTemplateView({ onNavigate, editingTemplateId }: CreateTemp
                       />
                       <div className="text-xs text-right text-slate-400 -mt-2">{pendingBlockText.length}/5000</div>
                     </>
+                  ) : block.type === 'checklist' ? (
+                    <>
+                      <input 
+                        type="text" 
+                        maxLength={50}
+                        value={pendingBlockLabel}
+                        onChange={e => setPendingBlockLabel(e.target.value)}
+                        className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                        placeholder="Enter label (optional)"
+                      />
+                      <div className="text-xs text-right text-slate-400 -mt-2">{pendingBlockLabel.length}/50</div>
+                      <textarea 
+                        maxLength={5000}
+                        value={pendingBlockText}
+                        onChange={e => setPendingBlockText(e.target.value)}
+                        className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 min-h-25 resize-none"
+                        autoFocus
+                        placeholder="One item per line..."
+                      />
+                      <div className="text-xs text-right text-slate-400 -mt-2">{pendingBlockText.split('\n').filter(i => i.trim()).length} items</div>
+                    </>
                   ) : (
                     <>
                       <input 
@@ -405,7 +481,7 @@ export function CreateTemplateView({ onNavigate, editingTemplateId }: CreateTemp
                     <button onClick={() => setEditingBlockId(null)} className="cursor-pointer px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors">Cancel</button>
                     <button 
                       onClick={handleSaveEdit} 
-                      disabled={block.type !== 'text' && !pendingBlockText.trim()}
+                      disabled={block.type === 'checklist' ? !pendingBlockText.split('\n').some(i => i.trim()) : block.type !== 'text' && !pendingBlockText.trim()}
                       className="cursor-pointer px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                     >
                       Save
@@ -455,6 +531,10 @@ export function CreateTemplateView({ onNavigate, editingTemplateId }: CreateTemp
                   </button>
                   <button onClick={() => setMenuState('text')} className="px-5 py-4 text-left text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors flex justify-between items-center border-t border-slate-100 dark:border-slate-700/50 text-slate-700 dark:text-slate-200 cursor-pointer">
                     Text Input
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-50"><polyline points="9 18 15 12 9 6"/></svg>
+                  </button>
+                  <button onClick={handleChecklistSelect} className="px-5 py-4 text-left text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors flex justify-between items-center border-t border-slate-100 dark:border-slate-700/50 text-slate-700 dark:text-slate-200 cursor-pointer">
+                    Checklist
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-50"><polyline points="9 18 15 12 9 6"/></svg>
                   </button>
                 </>
@@ -558,6 +638,44 @@ export function CreateTemplateView({ onNavigate, editingTemplateId }: CreateTemp
                     <button 
                       onClick={confirmAddParagraph} 
                       disabled={!pendingBlockText.trim()}
+                      className="cursor-pointer px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    >
+                      Confirm
+                    </button>
+                  </div>
+                </div>
+              )}
+              {menuState === 'configure-checklist' && (
+                <div className="p-5 flex flex-col gap-4">
+                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                    Checklist Label
+                  </label>
+                  <input 
+                    type="text" 
+                    maxLength={50}
+                    value={pendingBlockLabel}
+                    onChange={e => setPendingBlockLabel(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                    autoFocus
+                    placeholder="Enter label (optional)"
+                  />
+                  <div className="text-xs text-right text-slate-400 -mt-2">{pendingBlockLabel.length}/50</div>
+                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                    Checklist Items
+                  </label>
+                  <textarea 
+                    maxLength={5000}
+                    value={pendingBlockText}
+                    onChange={e => setPendingBlockText(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 min-h-25 resize-none"
+                    placeholder="One item per line..."
+                  />
+                  <div className="text-xs text-right text-slate-400 -mt-2">{pendingBlockText.split('\n').filter(i => i.trim()).length} items</div>
+                  <div className="flex justify-end gap-3 mt-2">
+                    <button onClick={() => setMenuState('main')} className="cursor-pointer px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors">Back</button>
+                    <button 
+                      onClick={confirmAddChecklist} 
+                      disabled={!pendingBlockText.split('\n').some(i => i.trim())}
                       className="cursor-pointer px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                     >
                       Confirm

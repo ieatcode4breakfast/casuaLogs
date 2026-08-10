@@ -20,7 +20,7 @@ export interface Template {
 Templates are composed of structural blocks that dictate layout, but do not contain user input data.
 
 ```typescript
-export type TemplateBlock = HeaderBlock | TextBlock | ParagraphBlock;
+export type TemplateBlock = HeaderBlock | TextBlock | ParagraphBlock | ChecklistBlock;
 
 export type HeaderBlock = {
   id: string;
@@ -40,6 +40,13 @@ export type ParagraphBlock = {
   id: string;
   type: 'paragraph';
   text: string;             // Max 5000 chars
+};
+
+export type ChecklistBlock = {
+  id: string;
+  type: 'checklist';
+  label: string;            // Optional, max 50 chars
+  items: string[];          // Array of predefined item labels (max 50 items, max 100 chars each)
 };
 ```
 
@@ -63,7 +70,7 @@ export interface Log {
 Log blocks are nearly identical to template blocks, except `LogTextBlock` requires a `value` property to store the user's answer.
 
 ```typescript
-export type LogBlock = LogHeaderBlock | LogParagraphBlock | LogTextBlock;
+export type LogBlock = LogHeaderBlock | LogParagraphBlock | LogTextBlock | LogChecklistBlock;
 
 export type LogHeaderBlock = {
   id: string;
@@ -84,5 +91,12 @@ export type LogParagraphBlock = {
   id: string;
   type: 'paragraph';
   text: string;             // Max 5000 chars
+};
+
+export type LogChecklistBlock = {
+  id: string;
+  type: 'checklist';
+  label: string;            // Optional, max 50 chars
+  items: { text: string; checked: boolean }[]; // Tracks check state
 };
 ```

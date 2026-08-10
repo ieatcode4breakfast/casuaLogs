@@ -20,7 +20,7 @@ export async function getTemplates(): Promise<Template[]> {
   return (await get('templates')) || [];
 }
 
-export async function saveTemplate(payload: SaveTemplatePayload): Promise<void> {
+export async function saveTemplate(payload: SaveTemplatePayload): Promise<string> {
   const { name, blocks, editingId } = payload;
   
   const trimmedName = name.trim();
@@ -47,6 +47,14 @@ export async function saveTemplate(payload: SaveTemplatePayload): Promise<void> 
     if (block.type === 'paragraph' && block.text.length > 5000) {
       throw new Error('Paragraph blocks cannot exceed 5000 characters.');
     }
+    if (block.type === 'checklist') {
+      if (block.label && block.label.length > 50) throw new Error('Checklist label cannot exceed 50 characters.');
+      if (!block.items || block.items.length === 0) throw new Error('Checklist must have at least one item.');
+      if (block.items.length > 50) throw new Error('Checklist cannot exceed 50 items.');
+      for (const item of block.items) {
+        if (item.length > 100) throw new Error('Checklist item cannot exceed 100 characters.');
+      }
+    }
   }
 
   // 2. Fetch Existing
@@ -63,7 +71,7 @@ export async function saveTemplate(payload: SaveTemplatePayload): Promise<void> 
         updatedAt: getUtcTimestamp()
       };
       await set('templates', existing);
-      return;
+      return editingId;
     }
   }
 
@@ -79,6 +87,7 @@ export async function saveTemplate(payload: SaveTemplatePayload): Promise<void> 
   
   existing.push(newTemplate);
   await set('templates', existing);
+  return newTemplate.id;
 }
 
 export async function deleteTemplate(id: string): Promise<void> {

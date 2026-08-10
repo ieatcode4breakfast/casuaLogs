@@ -36,6 +36,9 @@ export function CreateLogView({ onNavigate, templateId, editingLogId }: CreateLo
               if (b.type === 'text') {
                 return { ...b, value: '' } as LogBlock;
               }
+              if (b.type === 'checklist') {
+                return { ...b, items: b.items.map(item => ({ text: item, checked: false })) } as LogBlock;
+              }
               return { ...b } as LogBlock;
             });
             setBlocks(initialBlocks);
@@ -62,6 +65,16 @@ export function CreateLogView({ onNavigate, templateId, editingLogId }: CreateLo
     setBlocks(currentBlocks => 
       currentBlocks.map(b => 
         (b.id === id && b.type === 'text') ? { ...b, value } : b
+      )
+    );
+  };
+
+  const handleCheckToggle = (blockId: string, itemIndex: number) => {
+    setBlocks(currentBlocks =>
+      currentBlocks.map(b =>
+        (b.id === blockId && b.type === 'checklist')
+          ? { ...b, items: b.items.map((item, i) => i === itemIndex ? { ...item, checked: !item.checked } : item) }
+          : b
       )
     );
   };
@@ -196,6 +209,37 @@ export function CreateLogView({ onNavigate, templateId, editingLogId }: CreateLo
                     <div className="text-xs text-right text-slate-400 mt-1">{block.value.length}/5000</div>
                   </div>
                 )}
+              </div>
+            );
+          }
+
+          if (block.type === 'checklist') {
+            return (
+              <div key={block.id} className="py-2 flex flex-col gap-2">
+                {block.label && (
+                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                    {block.label}
+                  </label>
+                )}
+                <div className="flex flex-col gap-1.5">
+                  {block.items.map((item, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => handleCheckToggle(block.id, i)}
+                      className="flex items-center gap-2.5 text-left bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 hover:border-blue-500 hover:ring-2 hover:ring-blue-500/20 transition-all cursor-pointer"
+                    >
+                      <span className={`w-4 h-4 shrink-0 rounded border-2 flex items-center justify-center transition-colors ${item.checked ? 'bg-blue-600 border-blue-600' : 'border-slate-300 dark:border-slate-600'}`}>
+                        {item.checked && (
+                          <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        )}
+                      </span>
+                      <span className={`text-sm ${item.checked ? 'text-slate-400 line-through' : 'text-slate-700 dark:text-slate-300'}`}>
+                        {item.text}
+                      </span>
+                    </button>
+                  ))}
+                </div>
               </div>
             );
           }

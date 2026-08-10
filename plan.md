@@ -1,5 +1,5 @@
 ## Goal Description
-The "Choose a template" empty state in `SelectTemplateView` appears full-bleed on mobile screens because its parent `<main>` container deliberately lacks horizontal padding to accommodate the `ViewHeader` component. Furthermore, the empty state containers across both `HomeView` and `SelectTemplateView` use `border-y md:border-x` alongside `rounded-3xl`, which causes the sides to clip or lose borders on mobile devices. We will standardize these empty states so they are contained (not full-bleed) and have fully continuous borders on all screen sizes.
+Enhance the user experience so that when a user creates a new template via the "Choose a template" view (SelectTemplateView), they are immediately redirected to create a new log with that template, skipping the Home screen.
 
 ## User Review Required
 None.
@@ -9,40 +9,103 @@ None.
 
 ## Proposed Changes
 
-### 1. Fix Full-Bleed Empty State in SelectTemplateView
-**File: `src/components/SelectTemplateView.tsx`**
-- Remove `w-full` and replace `mx-auto` with `mx-4 md:mx-auto`. This natively applies a 16px side margin on mobile so the empty state is no longer full-bleed.
-- Replace `border-y md:border-x` with a continuous `border`.
-
-#### [MODIFY] src/components/SelectTemplateView.tsx
+---
+### Service Layer: Template Service
+#### [MODIFY] src/services/templateService.ts
+Update `saveTemplate` to return the ID of the created or updated template, rather than `void`.
+**Diff (Conceptual):**
 ```diff
-       {templates.length === 0 ? (
--        <div className="w-full md:max-w-md mx-auto px-6 py-10 md:p-10 flex flex-col items-center text-center bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl border-y md:border-x border-slate-200 dark:border-slate-800 rounded-3xl shadow-xl shadow-blue-900/5 dark:shadow-black/20">
-+        <div className="mx-4 md:mx-auto md:max-w-md px-6 py-10 md:p-10 flex flex-col items-center text-center bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-3xl shadow-xl shadow-blue-900/5 dark:shadow-black/20">
-           <div className="h-20 w-20 bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center mb-6 shadow-inner">
+- export async function saveTemplate(payload: SaveTemplatePayload): Promise<void> {
++ export async function saveTemplate(payload: SaveTemplatePayload): Promise<string> {
+...
+      await set('templates', existing);
+-      return;
++      return editingId;
+    }
+  }
+
+  const newTemplate: Template = {
+    id: crypto.randomUUID(),
+...
+  existing.push(newTemplate);
+  await set('templates', existing);
++ return newTemplate.id;
+}
 ```
 
-### 2. Fix Clipped Borders in HomeView Empty States
-**File: `src/components/HomeView.tsx`**
-- For both the Logs and Templates empty state containers, replace `border-y md:border-x` with a continuous `border` so the rounded corners render properly on mobile. (The `w-full` class can stay here since `HomeView`'s `<main>` tag already applies `px-4` padding).
-
-#### [MODIFY] src/components/HomeView.tsx
+#### [MODIFY] src/services/templateService.test.ts
+Update the test that explicitly checks for a `void` return type from `saveTemplate`.
+**Diff (Conceptual):**
 ```diff
-       {currentTab === 'logs' ? (
-         logs.length === 0 ? (
--          <div className="w-full md:max-w-md mx-auto px-6 py-10 md:p-10 flex flex-col items-center text-center bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl border-y md:border-x border-slate-200 dark:border-slate-800 rounded-3xl shadow-xl shadow-blue-900/5 dark:shadow-black/20">
-+          <div className="w-full md:max-w-md mx-auto px-6 py-10 md:p-10 flex flex-col items-center text-center bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-3xl shadow-xl shadow-blue-900/5 dark:shadow-black/20">
-             <div className="h-20 w-20 bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 rounded-full flex items-center justify-center mb-6 shadow-inner">
+-      await expect(saveTemplate({ name: 'Valid Name', blocks })).resolves.toBeUndefined();
++      await expect(saveTemplate({ name: 'Valid Name', blocks })).resolves.toEqual(expect.any(String));
+```
+
+---
+### App State & Routing
+#### [MODIFY] src/App.tsx
+Add a `templateIntent` state so the application remembers *why* the user is creating a template. Update `handleNavigate` to intercept the navigation action from `SelectTemplateView` to `CreateTemplateView` and set the intent. Pass this intent to `CreateTemplateView`.
+
+**Diff (Conceptual):**
+```diff
+  function App() {
+    const [currentView, setCurrentView] = useState<ViewState>('home')
++   const [templateIntent, setTemplateIntent] = useState<'home' | 'create-log'>('home')
+
+    const handleNavigate = (view: ViewState, id?: string) => {
++     if (view === 'create-template' && currentView === 'select-template' && !id) {
++       setTemplateIntent('create-log');
++     } else if (view === 'create-template') {
++       setTemplateIntent('home');
++     }
+      setCurrentView(view)
+```
+```diff
+-      {currentView === 'create-template' && <CreateTemplateView onNavigate={handleNavigate} editingTemplateId={editingTemplateId} />}
++      {currentView === 'create-template' && <CreateTemplateView onNavigate={handleNavigate} editingTemplateId={editingTemplateId} intent={templateIntent} />}
+```
+
+---
+### UI: Create Template View
+#### [MODIFY] src/components/CreateTemplateView.tsx
+Accept the new `intent` prop. Capture the returned template ID from `saveTemplate` and execute conditional routing based on the intent.
+
+**Diff (Conceptual):**
+```diff
+  interface CreateTemplateViewProps {
+    onNavigate: (view: 'home' | 'create-template' | 'create-log', id?: string) => void;
+    editingTemplateId?: string | null;
++   intent?: 'home' | 'create-log';
+  }
+
+- export function CreateTemplateView({ onNavigate, editingTemplateId }: CreateTemplateViewProps) {
++ export function CreateTemplateView({ onNavigate, editingTemplateId, intent = 'home' }: CreateTemplateViewProps) {
+
 ...
-       ) : templates.length === 0 ? (
--        <div className="w-full md:max-w-md mx-auto px-6 py-10 md:p-10 flex flex-col items-center text-center bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl border-y md:border-x border-slate-200 dark:border-slate-800 rounded-3xl shadow-xl shadow-blue-900/5 dark:shadow-black/20">
-+        <div className="w-full md:max-w-md mx-auto px-6 py-10 md:p-10 flex flex-col items-center text-center bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-3xl shadow-xl shadow-blue-900/5 dark:shadow-black/20">
-           <div className="h-20 w-20 bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center mb-6 shadow-inner">
+  const handleSave = async () => {
+    try {
+-     await saveTemplate({
++     const savedId = await saveTemplate({
+        name,
+        blocks,
+        editingId: editingTemplateId
+      });
+-     onNavigate('home');
++     onNavigate(intent, intent === 'create-log' ? savedId : undefined);
+    } catch (err: any) {
 ```
 
 ## Verification Plan
+### Automated Tests
+Run typechecks and unit tests to ensure `templateService.ts` passes with its new return type:
+```bash
+npx tsc --noEmit
+npx vitest run
+```
 
 ### Manual Verification
-1. Open the application on a mobile viewport (or resize the browser window).
-2. Navigate to `SelectTemplateView` when there are no templates. Verify that it is no longer full-bleed and has proper side margins.
-3. Check `HomeView` (both Logs and Templates). Verify that all empty states now have continuous borders wrapped around their rounded corners on mobile.
+1. Navigate to the Home screen and click the "New Template" button in the Templates tab.
+2. Build and save a template. Ensure it redirects back to the Home screen (testing the default intent).
+3. Click "New Log" to open the Select Template view.
+4. Click the "New" button in the Select Template view.
+5. Build and save a template. Ensure it immediately redirects to the Create Log view with the new template active.

@@ -75,6 +75,36 @@ describe('templateService', () => {
       await expect(saveTemplate({ name: 'Valid Name', blocks }))
         .rejects.toThrow('Paragraph blocks cannot exceed 5000 characters.');
     });
+
+    it('throws if a checklist label exceeds 50 characters', async () => {
+      const blocks: TemplateBlock[] = [{ id: '1', type: 'checklist', label: 'a'.repeat(51), items: ['A'] }];
+      await expect(saveTemplate({ name: 'Valid Name', blocks }))
+        .rejects.toThrow('Checklist label cannot exceed 50 characters.');
+    });
+
+    it('throws if a checklist has zero items', async () => {
+      const blocks: TemplateBlock[] = [{ id: '1', type: 'checklist', label: 'Groceries', items: [] }];
+      await expect(saveTemplate({ name: 'Valid Name', blocks }))
+        .rejects.toThrow('Checklist must have at least one item.');
+    });
+
+    it('throws if a checklist exceeds 50 items', async () => {
+      const blocks: TemplateBlock[] = [{ id: '1', type: 'checklist', label: 'Groceries', items: Array.from({ length: 51 }, (_, i) => `Item ${i}`) }];
+      await expect(saveTemplate({ name: 'Valid Name', blocks }))
+        .rejects.toThrow('Checklist cannot exceed 50 items.');
+    });
+
+    it('throws if a checklist item exceeds 100 characters', async () => {
+      const blocks: TemplateBlock[] = [{ id: '1', type: 'checklist', label: 'Groceries', items: ['a'.repeat(101)] }];
+      await expect(saveTemplate({ name: 'Valid Name', blocks }))
+        .rejects.toThrow('Checklist item cannot exceed 100 characters.');
+    });
+
+    it('succeeds with a valid checklist block', async () => {
+      vi.mocked(idb.get).mockResolvedValueOnce(undefined);
+      const blocks: TemplateBlock[] = [{ id: '1', type: 'checklist', label: 'Groceries', items: ['Apples', 'Bananas'] }];
+      await expect(saveTemplate({ name: 'Valid Name', blocks })).resolves.toEqual(expect.any(String));
+    });
   });
 
   describe('Creation (Append)', () => {

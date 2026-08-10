@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { saveLog, deleteLog } from './logService';
+import { saveLog, deleteLog, type LogBlock } from './logService';
 import { get, set } from 'idb-keyval';
 
 vi.mock('idb-keyval', () => ({
@@ -50,6 +50,44 @@ describe('logService', () => {
 
     const invalidParagraph = [{ id: '1', type: 'paragraph' as const, text: 'a'.repeat(5001) }];
     await expect(saveLog({ title: 'Valid Title', blocks: invalidParagraph as any })).rejects.toThrow('Paragraph blocks cannot exceed 5000 characters.');
+  });
+
+  it('should enforce checklist validation rules', async () => {
+    // Label too long
+    await expect(saveLog({
+      title: 'Valid Title',
+      blocks: [{ id: '1', type: 'checklist', label: 'a'.repeat(51), items: [{ text: 'A', checked: false }] }] as unknown as LogBlock[]
+    })).rejects.toThrow('Checklist label cannot exceed 50 characters.');
+
+    // Zero items
+    await expect(saveLog({
+      title: 'Valid Title',
+      blocks: [{ id: '1', type: 'checklist', label: 'G', items: [] }] as unknown as LogBlock[]
+    })).rejects.toThrow('Checklist must have at least one item.');
+
+    // Too many items
+    await expect(saveLog({
+      title: 'Valid Title',
+      blocks: [{ id: '1', type: 'checklist', label: 'G', items: Array.from({ length: 51 }, (_, i) => ({ text: `Item ${i}`, checked: false })) }] as unknown as LogBlock[]
+    })).rejects.toThrow('Checklist cannot exceed 50 items.');
+
+    // Item text too long
+    await expect(saveLog({
+      title: 'Valid Title',
+      blocks: [{ id: '1', type: 'checklist', label: 'G', items: [{ text: 'a'.repeat(101), checked: false }] }] as unknown as LogBlock[]
+    })).rejects.toThrow('Checklist item cannot exceed 100 characters.');
+
+    // Item lacking a checked boolean
+    await expect(saveLog({
+      title: 'Valid Title',
+      blocks: [{ id: '1', type: 'checklist', label: 'G', items: [{ text: 'A' }] }] as unknown as LogBlock[]
+    })).rejects.toThrow('Checklist item must have a checked state.');
+
+    // Valid checklist succeeds
+    await expect(saveLog({
+      title: 'Valid Title',
+      blocks: [{ id: '1', type: 'checklist', label: 'G', items: [{ text: 'A', checked: true }] }] as unknown as LogBlock[]
+    })).resolves.toBeUndefined();
   });
 
   it('should delete a log', async () => {

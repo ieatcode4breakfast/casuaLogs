@@ -13,6 +13,7 @@ function App() {
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null)
   const [viewingLogId, setViewingLogId] = useState<string | null>(null)
   const [homeTab, setHomeTab] = useState<'logs' | 'templates'>('logs')
+  const [templateIntent, setTemplateIntent] = useState<'home' | 'create-log'>('home')
   
   const [dark, setDark] = useState(() => {
     const stored = localStorage.getItem('theme')
@@ -27,6 +28,11 @@ function App() {
   }, [dark])
 
   const handleNavigate = (view: ViewState, id?: string) => {
+    if (view === 'create-template' && currentView === 'select-template' && !id) {
+      setTemplateIntent('create-log');
+    } else if (view === 'create-template') {
+      setTemplateIntent('home');
+    }
     setCurrentView(view)
     if (view === 'create-template') {
       setEditingTemplateId(id || null)
@@ -77,7 +83,7 @@ function App() {
       </header>
 
       {currentView === 'home' && <HomeView onNavigate={handleNavigate} currentTab={homeTab} onTabChange={setHomeTab} />}
-      {currentView === 'create-template' && <CreateTemplateView onNavigate={handleNavigate} editingTemplateId={editingTemplateId} />}
+      {currentView === 'create-template' && <CreateTemplateView onNavigate={handleNavigate} editingTemplateId={editingTemplateId} intent={templateIntent} />}
       {currentView === 'select-template' && <SelectTemplateView onNavigate={handleNavigate} />}
       {currentView === 'create-log' && selectedTemplateId && <CreateLogView onNavigate={handleNavigate} templateId={selectedTemplateId} />}
       {currentView === 'edit-log' && viewingLogId && <CreateLogView onNavigate={handleNavigate} editingLogId={viewingLogId} />}

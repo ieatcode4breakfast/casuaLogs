@@ -71,6 +71,34 @@ describe('templateReducer', () => {
     expect(newState[0].type === 'text' && newState[0].label).toBe('');
   });
 
+  test('adds a checklist block', () => {
+    const action = {
+      type: 'ADD_BLOCK' as const,
+      payload: {
+        id: '3',
+        type: 'checklist' as const,
+        label: 'Groceries',
+        items: ['Apples', 'Bananas']
+      }
+    };
+    const newState = templateReducer(initialState, action);
+    expect(newState).toHaveLength(1);
+    expect(newState[0]).toEqual(action.payload);
+  });
+
+  test('updates a checklist block label and items', () => {
+    const state: TemplateBlock[] = [
+      { id: '1', type: 'checklist', label: 'Old Label', items: ['A'] }
+    ];
+    const action = {
+      type: 'UPDATE_BLOCK' as const,
+      payload: { id: '1', text: 'New Label', items: ['X', 'Y'] }
+    };
+    const newState = templateReducer(state, action);
+    expect(newState[0].type === 'checklist' && newState[0].label).toBe('New Label');
+    expect(newState[0].type === 'checklist' && newState[0].items).toEqual(['X', 'Y']);
+  });
+
   test('deletes a block', () => {
     const state: TemplateBlock[] = [
       { id: '1', type: 'header', level: 1, text: 'Title' },

@@ -18,12 +18,19 @@ export type ParagraphBlock = {
   text: string;
 };
 
-export type TemplateBlock = HeaderBlock | TextBlock | ParagraphBlock;
+export type ChecklistBlock = {
+  id: string;
+  type: 'checklist';
+  label: string;
+  items: string[];
+};
+
+export type TemplateBlock = HeaderBlock | TextBlock | ParagraphBlock | ChecklistBlock;
 
 export type TemplateAction =
   | { type: 'SET_BLOCKS'; payload: TemplateBlock[] }
   | { type: 'ADD_BLOCK'; payload: TemplateBlock }
-  | { type: 'UPDATE_BLOCK'; payload: { id: string; text: string } }
+  | { type: 'UPDATE_BLOCK'; payload: { id: string; text: string; items?: string[] } }
   | { type: 'DELETE_BLOCK'; payload: { id: string } }
   | { type: 'REORDER_BLOCKS'; payload: { fromIndex: number; toIndex: number } };
 
@@ -45,6 +52,10 @@ export function templateReducer(state: TemplateBlock[], action: TemplateAction):
         
         if (block.type === 'text') {
           return { ...block, label: action.payload.text };
+        }
+        
+        if (block.type === 'checklist') {
+          return { ...block, label: action.payload.text, items: action.payload.items || [] };
         }
         
         return block;
