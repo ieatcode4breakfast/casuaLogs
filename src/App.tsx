@@ -7,6 +7,7 @@ export type ViewState = 'home' | 'create-template';
 function App() {
   const [currentView, setCurrentView] = useState<ViewState>('home')
   const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null)
+  const [homeTab, setHomeTab] = useState<'logs' | 'templates'>('logs')
   
   const [dark, setDark] = useState(() => {
     const stored = localStorage.getItem('theme')
@@ -54,7 +55,7 @@ function App() {
         </button>
       </header>
 
-      {currentView === 'home' && <HomeView onNavigate={handleNavigate} />}
+      {currentView === 'home' && <HomeView onNavigate={handleNavigate} currentTab={homeTab} onTabChange={setHomeTab} />}
       {currentView === 'create-template' && <CreateTemplateView onNavigate={handleNavigate} editingTemplateId={editingTemplateId} />}
     </div>
   )

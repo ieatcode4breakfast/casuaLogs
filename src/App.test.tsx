@@ -12,7 +12,7 @@ test('renders the app shell with dark mode toggle', () => {
   render(<App />)
 
   expect(screen.getByRole('heading', { name: 'casuaLogs' })).toBeTruthy()
-  expect(screen.getByRole('button', { name: 'Create Template' })).toBeTruthy()
+  expect(screen.getByRole('button', { name: 'Create Log' })).toBeTruthy()
 
   const toggle = screen.getByRole('button', { name: 'Toggle dark mode' })
   fireEvent.click(toggle)
