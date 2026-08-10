@@ -72,7 +72,7 @@ export function HomeView({ onNavigate, currentTab, onTabChange }: HomeViewProps)
             No logs yet
           </h2>
           <p className="text-slate-500 dark:text-slate-400 mb-8 max-w-sm leading-relaxed">
-            Start tracking your day by creating a new log based on one of your templates.
+            Start creating logs. You can use templates to make logging easier.
           </p>
           <button
             type="button"
@@ -91,7 +91,7 @@ export function HomeView({ onNavigate, currentTab, onTabChange }: HomeViewProps)
             No templates yet
           </h2>
           <p className="text-slate-500 dark:text-slate-400 mb-8 max-w-sm leading-relaxed">
-            Get started by creating your first template. You can use it to log daily events, workouts, or whatever you need.
+            Get started by creating your first template. You can use it to log daily events, notes, or whatever you need.
           </p>
           <button
             type="button"

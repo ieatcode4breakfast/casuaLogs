@@ -43,6 +43,7 @@ export function CreateTemplateView({ onNavigate, editingTemplateId }: CreateTemp
   const [editingBlockId, setEditingBlockId] = useState<string | null>(null);
   const [templateName, setTemplateName] = useState('');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   
   const [pendingHeaderLevel, setPendingHeaderLevel] = useState<1 | 2 | 3 | null>(null);
   const [pendingTextType, setPendingTextType] = useState<'short' | 'short-label' | 'long' | 'long-label' | null>(null);
@@ -81,16 +82,19 @@ export function CreateTemplateView({ onNavigate, editingTemplateId }: CreateTemp
     }
   };
 
-  const handleDeleteTemplate = async () => {
+  const handleDeleteTemplateClick = () => {
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteTemplate = async () => {
     if (!editingTemplateId) return;
-    if (window.confirm('Are you sure you want to delete this template? This cannot be undone.')) {
-      try {
-        await deleteTemplate(editingTemplateId);
-        onNavigate('home');
-      } catch (e: any) {
-        setToastMessage(e.message || "Failed to delete template");
-        setTimeout(() => setToastMessage(null), 3000);
-      }
+    try {
+      await deleteTemplate(editingTemplateId);
+      onNavigate('home');
+    } catch (e: any) {
+      setToastMessage(e.message || "Failed to delete template");
+      setTimeout(() => setToastMessage(null), 3000);
+      setShowDeleteModal(false);
     }
   };
 
@@ -217,7 +221,7 @@ export function CreateTemplateView({ onNavigate, editingTemplateId }: CreateTemp
             maxLength={50}
             value={templateName}
             onChange={(e) => setTemplateName(e.target.value)}
-            placeholder="e.g. Daily Workout, Meeting Notes..."
+            placeholder="e.g. Daily Journal Entry, Meeting Notes..."
             className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all font-medium placeholder:text-slate-400 dark:placeholder:text-slate-500"
           />
         </div>
@@ -254,7 +258,7 @@ export function CreateTemplateView({ onNavigate, editingTemplateId }: CreateTemp
                               setMenuState('closed');
                             }
                           }}
-                          className={`flex items-start transition-all border border-transparent cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-lg -mx-4 px-2 md:px-4 w-full ${block.type === 'header' ? 'pt-6' : 'pt-2'}`}
+                          className={`flex items-start transition-all border border-transparent cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-xl w-full py-2`}
                         >
                           {editingBlockId !== block.id && (
                             <div 
@@ -267,7 +271,7 @@ export function CreateTemplateView({ onNavigate, editingTemplateId }: CreateTemp
                               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="12" r="1.5"/><circle cx="9" cy="5" r="1.5"/><circle cx="9" cy="19" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="15" cy="5" r="1.5"/><circle cx="15" cy="19" r="1.5"/></svg>
                             </div>
                           )}
-                          <div className="flex flex-col gap-2 w-full">
+                          <div className="flex flex-col gap-2 w-full min-w-0 pr-2">
                             {block.type === 'header' && (
                               <div className={`w-full wrap-break-word whitespace-pre-wrap text-slate-900 dark:text-white ${block.level === 1 ? 'text-3xl font-black tracking-tight' : block.level === 2 ? 'text-2xl font-bold tracking-tight' : 'text-xl font-bold'}`}>
                                 {block.text}
@@ -279,20 +283,16 @@ export function CreateTemplateView({ onNavigate, editingTemplateId }: CreateTemp
                               </div>
                             )}
                             {block.type === 'text' && (
-                              <div className="w-full flex flex-col gap-2 pointer-events-none">
+                              <div className="w-full flex flex-col gap-2 pointer-events-none min-w-0">
                                 {block.label && (
                                   <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1 wrap-break-word whitespace-pre-wrap w-full">
                                     {block.label}
                                   </label>
                                 )}
                                 {block.inputType === 'short' ? (
-                                  <div className="w-full h-11 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center px-4">
-                                    <span className="text-slate-400 text-sm">Short text answer...</span>
-                                  </div>
+                                  <div className="w-full h-11 bg-slate-50/50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 rounded-xl"></div>
                                 ) : (
-                                  <div className="w-full h-24 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex">
-                                    <span className="text-slate-400 text-sm">Long text answer...</span>
-                                  </div>
+                                  <div className="w-full h-24 bg-slate-50/50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 rounded-xl"></div>
                                 )}
                               </div>
                             )}
@@ -307,7 +307,7 @@ export function CreateTemplateView({ onNavigate, editingTemplateId }: CreateTemp
           )}
 
           {/* Add Block Button with Menu */}
-          <div className="relative flex flex-col items-center">
+          <div className="relative flex flex-col items-center mt-2">
             <button
               type="button"
               onClick={() => setMenuState(menuState === 'closed' ? 'main' : 'closed')}
@@ -326,7 +326,7 @@ export function CreateTemplateView({ onNavigate, editingTemplateId }: CreateTemp
             {editingTemplateId && (
               <button
                 type="button"
-                onClick={handleDeleteTemplate}
+                onClick={handleDeleteTemplateClick}
                 className="cursor-pointer group relative inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold rounded-xl text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/50 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-500"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
@@ -591,6 +591,40 @@ export function CreateTemplateView({ onNavigate, editingTemplateId }: CreateTemp
           <div className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-6 py-3.5 rounded-xl shadow-xl shadow-black/20 font-medium text-sm flex items-center gap-3 pointer-events-auto">
             <svg className="shrink-0" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
             <span className="truncate">{toastMessage}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-200 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowDeleteModal(false)}></div>
+          <div className="relative bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-md p-6 animate-in zoom-in-95 duration-200">
+            <div className="flex flex-col items-center text-center">
+              <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 flex items-center justify-center mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
+              </div>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Delete Template?</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mb-8">
+                Are you sure you want to delete this template? This action cannot be undone.
+              </p>
+              <div className="flex gap-3 w-full">
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteModal(false)}
+                  className="flex-1 cursor-pointer px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-xl transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-500"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmDeleteTemplate}
+                  className="flex-1 cursor-pointer px-4 py-2.5 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 rounded-xl transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
