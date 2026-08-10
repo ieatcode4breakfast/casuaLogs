@@ -28,6 +28,7 @@ function App() {
   }, [dark])
 
   const handleNavigate = (view: ViewState, id?: string) => {
+    window.scrollTo(0, 0);
     if (view === 'create-template' && currentView === 'select-template' && !id) {
       setTemplateIntent('create-log');
     } else if (view === 'create-template') {

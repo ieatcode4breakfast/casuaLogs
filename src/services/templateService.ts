@@ -51,9 +51,11 @@ export async function saveTemplate(payload: SaveTemplatePayload): Promise<string
       if (block.label && block.label.length > 50) throw new Error('Checklist label cannot exceed 50 characters.');
       if (!block.items || block.items.length === 0) throw new Error('Checklist must have at least one item.');
       if (block.items.length > 50) throw new Error('Checklist cannot exceed 50 items.');
+      let totalLength = 0;
       for (const item of block.items) {
-        if (item.length > 100) throw new Error('Checklist item cannot exceed 100 characters.');
+        totalLength += item.length;
       }
+      if (totalLength > 5000) throw new Error('Checklist total characters cannot exceed 5000.');
     }
   }
 

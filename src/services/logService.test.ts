@@ -71,11 +71,11 @@ describe('logService', () => {
       blocks: [{ id: '1', type: 'checklist', label: 'G', items: Array.from({ length: 51 }, (_, i) => ({ text: `Item ${i}`, checked: false })) }] as unknown as LogBlock[]
     })).rejects.toThrow('Checklist cannot exceed 50 items.');
 
-    // Item text too long
+    // Checklist total characters too long
     await expect(saveLog({
       title: 'Valid Title',
-      blocks: [{ id: '1', type: 'checklist', label: 'G', items: [{ text: 'a'.repeat(101), checked: false }] }] as unknown as LogBlock[]
-    })).rejects.toThrow('Checklist item cannot exceed 100 characters.');
+      blocks: [{ id: '1', type: 'checklist', label: 'G', items: [{ text: 'a'.repeat(5001), checked: false }] }] as unknown as LogBlock[]
+    })).rejects.toThrow('Checklist total characters cannot exceed 5000.');
 
     // Item lacking a checked boolean
     await expect(saveLog({
@@ -87,7 +87,7 @@ describe('logService', () => {
     await expect(saveLog({
       title: 'Valid Title',
       blocks: [{ id: '1', type: 'checklist', label: 'G', items: [{ text: 'A', checked: true }] }] as unknown as LogBlock[]
-    })).resolves.toBeUndefined();
+    })).resolves.toEqual(expect.any(String));
   });
 
   it('should delete a log', async () => {

@@ -19,7 +19,7 @@ export function Card({ title, onClick, color = 'blue', createdAt, updatedAt, lef
       onClick={onClick}
       className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-sm border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 flex flex-col cursor-pointer group h-full"
     >
-      <h3 className={`text-lg font-bold text-slate-900 dark:text-white transition-colors line-clamp-2 ${hoverColorClass} ${(createdAt || updatedAt || leftFooterNode) ? 'mb-2' : ''}`}>
+      <h3 className={`text-lg font-bold text-slate-900 dark:text-white transition-colors line-clamp-2 break-words ${hoverColorClass} ${(createdAt || updatedAt || leftFooterNode) ? 'mb-2' : ''}`}>
         {title}
       </h3>
       {(createdAt || updatedAt || leftFooterNode) && (

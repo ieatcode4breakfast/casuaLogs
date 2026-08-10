@@ -49,7 +49,7 @@ export async function getLogs(): Promise<Log[]> {
   return (await get('logs')) || [];
 }
 
-export async function saveLog(payload: SaveLogPayload): Promise<void> {
+export async function saveLog(payload: SaveLogPayload): Promise<string> {
   const { title, blocks, editingId } = payload;
   
   const trimmedTitle = title?.trim() || '';
@@ -81,10 +81,12 @@ export async function saveLog(payload: SaveLogPayload): Promise<void> {
       if (block.label && block.label.length > 50) throw new Error('Checklist label cannot exceed 50 characters.');
       if (!block.items || block.items.length === 0) throw new Error('Checklist must have at least one item.');
       if (block.items.length > 50) throw new Error('Checklist cannot exceed 50 items.');
+      let totalLength = 0;
       for (const item of block.items) {
         if (typeof item.checked !== 'boolean') throw new Error('Checklist item must have a checked state.');
-        if (item.text.length > 100) throw new Error('Checklist item cannot exceed 100 characters.');
+        totalLength += item.text.length;
       }
+      if (totalLength > 5000) throw new Error('Checklist total characters cannot exceed 5000.');
     }
   }
 
@@ -100,7 +102,7 @@ export async function saveLog(payload: SaveLogPayload): Promise<void> {
         updatedAt: getUtcTimestamp()
       };
       await set('logs', existing);
-      return;
+      return editingId;
     }
   }
 
@@ -115,6 +117,7 @@ export async function saveLog(payload: SaveLogPayload): Promise<void> {
   
   existing.push(newLog);
   await set('logs', existing);
+  return newLog.id;
 }
 
 export async function deleteLog(id: string): Promise<void> {

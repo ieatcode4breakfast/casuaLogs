@@ -94,10 +94,10 @@ describe('templateService', () => {
         .rejects.toThrow('Checklist cannot exceed 50 items.');
     });
 
-    it('throws if a checklist item exceeds 100 characters', async () => {
-      const blocks: TemplateBlock[] = [{ id: '1', type: 'checklist', label: 'Groceries', items: ['a'.repeat(101)] }];
+    it('throws if checklist total characters exceed 5000', async () => {
+      const blocks: TemplateBlock[] = [{ id: '1', type: 'checklist', label: 'Groceries', items: ['a'.repeat(5001)] }];
       await expect(saveTemplate({ name: 'Valid Name', blocks }))
-        .rejects.toThrow('Checklist item cannot exceed 100 characters.');
+        .rejects.toThrow('Checklist total characters cannot exceed 5000.');
     });
 
     it('succeeds with a valid checklist block', async () => {

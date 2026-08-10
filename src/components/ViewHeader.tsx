@@ -19,7 +19,7 @@ export function ViewHeader({ title, onBack, backTitle = "Go back" }: ViewHeaderP
           <polyline points="12 19 5 12 12 5" />
         </svg>
       </button>
-      <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white line-clamp-2">
+      <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white line-clamp-2 break-words">
         {title}
       </h2>
     </div>

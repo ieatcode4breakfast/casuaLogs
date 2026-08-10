@@ -81,8 +81,8 @@ export function CreateLogView({ onNavigate, templateId, editingLogId }: CreateLo
 
   const handleSaveLog = async () => {
     try {
-      await saveLog({ title, blocks, editingId: editingLogId });
-      onNavigate('home');
+      const savedId = await saveLog({ title, blocks, editingId: editingLogId });
+      onNavigate('view-log', savedId);
     } catch (e) {
       const message = e instanceof Error ? e.message : "Failed to save log";
       setToastMessage(message);
@@ -149,7 +149,7 @@ export function CreateLogView({ onNavigate, templateId, editingLogId }: CreateLo
             const sizeClass = block.level === 1 ? 'text-2xl' : block.level === 2 ? 'text-xl' : 'text-lg';
             return (
               <div key={block.id} className="py-2">
-                <HTag className={`${sizeClass} font-bold text-slate-900 dark:text-white`}>
+                <HTag className={`${sizeClass} font-bold text-slate-900 dark:text-white break-words`}>
                   {block.text || 'Untitled Header'}
                 </HTag>
               </div>
@@ -159,7 +159,7 @@ export function CreateLogView({ onNavigate, templateId, editingLogId }: CreateLo
           if (block.type === 'paragraph') {
             return (
               <div key={block.id} className="py-2">
-                <p className="text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">
+                <p className="text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap break-words">
                   {block.text || 'Empty paragraph...'}
                 </p>
               </div>
@@ -169,7 +169,7 @@ export function CreateLogView({ onNavigate, templateId, editingLogId }: CreateLo
           if (block.type === 'text') {
             return (
               <div key={block.id} className="py-2 flex flex-col gap-2">
-                <label htmlFor={`input-${block.id}`} className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                <label htmlFor={`input-${block.id}`} className="text-sm font-semibold text-slate-700 dark:text-slate-300 break-words">
                   {block.label}
                 </label>
                 {block.inputType === 'short' ? (
@@ -217,7 +217,7 @@ export function CreateLogView({ onNavigate, templateId, editingLogId }: CreateLo
             return (
               <div key={block.id} className="py-2 flex flex-col gap-2">
                 {block.label && (
-                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 break-words">
                     {block.label}
                   </label>
                 )}
@@ -227,14 +227,14 @@ export function CreateLogView({ onNavigate, templateId, editingLogId }: CreateLo
                       key={i}
                       type="button"
                       onClick={() => handleCheckToggle(block.id, i)}
-                      className="flex items-center gap-2.5 text-left bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 hover:border-blue-500 hover:ring-2 hover:ring-blue-500/20 transition-all cursor-pointer"
+                      className="flex items-start gap-2.5 text-left bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 hover:border-blue-500 hover:ring-2 hover:ring-blue-500/20 transition-all cursor-pointer"
                     >
-                      <span className={`w-4 h-4 shrink-0 rounded border-2 flex items-center justify-center transition-colors ${item.checked ? 'bg-blue-600 border-blue-600' : 'border-slate-300 dark:border-slate-600'}`}>
+                      <span className={`w-4 h-4 mt-0.5 shrink-0 rounded border-2 flex items-center justify-center transition-colors ${item.checked ? 'bg-blue-600 border-blue-600' : 'border-slate-300 dark:border-slate-600'}`}>
                         {item.checked && (
                           <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                         )}
                       </span>
-                      <span className={`text-sm ${item.checked ? 'text-slate-400 line-through' : 'text-slate-700 dark:text-slate-300'}`}>
+                      <span className={`text-sm break-words line-clamp-2 text-left ${item.checked ? 'text-slate-400 line-through' : 'text-slate-700 dark:text-slate-300'}`}>
                         {item.text}
                       </span>
                     </button>
