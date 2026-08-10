@@ -42,9 +42,9 @@ describe('templateService', () => {
         .rejects.toThrow('Template name is required and cannot be empty.');
     });
 
-    it('throws if template name exceeds 50 characters', async () => {
-      await expect(saveTemplate({ name: 'a'.repeat(51), blocks: [{ id: '1', type: 'paragraph', text: 'hi' }] }))
-        .rejects.toThrow('Template name cannot exceed 50 characters.');
+    it('throws if template name exceeds 100 characters', async () => {
+      await expect(saveTemplate({ name: 'a'.repeat(101), blocks: [{ id: '1', type: 'paragraph', text: 'hi' }] }))
+        .rejects.toThrow('Template name cannot exceed 100 characters.');
     });
 
     it('throws if template has zero blocks', async () => {

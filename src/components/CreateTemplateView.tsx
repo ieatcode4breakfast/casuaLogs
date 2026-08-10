@@ -7,6 +7,7 @@ import { CSS } from '@dnd-kit/utilities';
 
 import { templateReducer } from '../reducers/templateReducer';
 import { saveTemplate, deleteTemplate } from '../services/templateService';
+import { ViewHeader } from './ViewHeader';
 
 interface CreateTemplateViewProps {
   onNavigate: (view: 'home' | 'create-template') => void;
@@ -183,19 +184,10 @@ export function CreateTemplateView({ onNavigate, editingTemplateId }: CreateTemp
 
   return (
     <main className="max-w-3xl mx-auto md:px-6 py-6 md:py-12 flex flex-col min-h-[80vh]">
-      <div className="flex items-center gap-4 px-6 md:px-0 mb-6 md:mb-8">
-        <button
-          type="button"
-          onClick={() => onNavigate('home')}
-          className="cursor-pointer p-2 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-          aria-label="Go back"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" /></svg>
-        </button>
-        <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-          {editingTemplateId ? 'Edit Template' : 'Create Template'}
-        </h2>
-      </div>
+      <ViewHeader 
+        title={editingTemplateId ? 'Edit Template' : 'Create Template'} 
+        onBack={() => onNavigate('home')} 
+      />
 
       <div className="bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl border-y md:border-x border-slate-200 dark:border-slate-800 rounded-3xl shadow-xl shadow-blue-900/5 dark:shadow-black/20 p-6 md:p-8 flex flex-col">
 
@@ -207,7 +199,7 @@ export function CreateTemplateView({ onNavigate, editingTemplateId }: CreateTemp
           <input
             type="text"
             id="template-name"
-            maxLength={50}
+            maxLength={100}
             value={templateName}
             onChange={(e) => setTemplateName(e.target.value)}
             placeholder="e.g. Daily Journal Entry, Meeting Notes..."

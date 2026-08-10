@@ -29,8 +29,8 @@ export async function saveTemplate(payload: SaveTemplatePayload): Promise<void> 
   if (!trimmedName) {
     throw new Error('Template name is required and cannot be empty.');
   }
-  if (trimmedName.length > 50) {
-    throw new Error('Template name cannot exceed 50 characters.');
+  if (trimmedName.length > 100) {
+    throw new Error('Template name cannot exceed 100 characters.');
   }
   if (!blocks || blocks.length === 0) {
     throw new Error('Template must contain at least one block.');

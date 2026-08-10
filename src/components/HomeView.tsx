@@ -114,7 +114,6 @@ export function HomeView({ onNavigate, currentTab, onTabChange }: HomeViewProps)
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {logs.slice().reverse().map(log => {
                 const preview = log.title || getLogPreview(log);
-                const truncatedPreview = preview.length > 60 ? preview.substring(0, 60) + '...' : preview;
                 return (
                   <div 
                     key={log.id} 
@@ -122,11 +121,11 @@ export function HomeView({ onNavigate, currentTab, onTabChange }: HomeViewProps)
                     className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-sm border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 flex flex-col cursor-pointer group"
                   >
                     <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2">
-                      {truncatedPreview}
+                      {preview}
                     </h3>
                     <div className="text-sm text-slate-500 dark:text-slate-400 mt-auto pt-4 flex justify-end items-center border-t border-slate-100 dark:border-slate-800/60">
                       <span className="text-xs text-right font-medium">
-                        {new Date(log.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                        Last modified: {new Date(log.createdAt).toLocaleDateString()}
                       </span>
                     </div>
                   </div>
@@ -176,14 +175,11 @@ export function HomeView({ onNavigate, currentTab, onTabChange }: HomeViewProps)
                 onClick={() => onNavigate('create-template', template.id)}
                 className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-sm border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 flex flex-col cursor-pointer group"
               >
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors">{template.name}</h3>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors line-clamp-2">{template.name}</h3>
                 <div className="text-sm text-slate-500 dark:text-slate-400 mt-auto pt-4 flex justify-between items-center">
                   <span>{template.blocks.length} block{template.blocks.length !== 1 ? 's' : ''}</span>
                   <span className="text-xs text-right">
-                    Created: {new Date(template.createdAt).toLocaleDateString()}
-                    {template.updatedAt && template.updatedAt !== template.createdAt && (
-                      <span className="ml-1 opacity-80 block">(Edited: {new Date(template.updatedAt).toLocaleDateString()})</span>
-                    )}
+                    Last modified: {new Date(template.updatedAt || template.createdAt).toLocaleDateString()}
                   </span>
                 </div>
               </div>

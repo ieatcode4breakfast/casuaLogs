@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getTemplates, type Template } from '../services/templateService';
 import { saveLog, type LogBlock } from '../services/logService';
+import { ViewHeader } from './ViewHeader';
 
 interface CreateLogViewProps {
   onNavigate: (view: 'home' | 'create-template' | 'select-template') => void;
@@ -84,7 +85,7 @@ export function CreateLogView({ onNavigate, templateId }: CreateLogViewProps) {
   }
 
   return (
-    <main className="max-w-3xl mx-auto px-4 md:px-6 py-8 md:py-12">
+    <main className="max-w-3xl mx-auto md:px-6 py-8 md:py-12">
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed bottom-4 right-4 md:bottom-8 md:right-8 bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-6 py-3 rounded-xl shadow-xl flex items-center gap-3 animate-in slide-in-from-bottom-5 z-50">
@@ -93,18 +94,11 @@ export function CreateLogView({ onNavigate, templateId }: CreateLogViewProps) {
         </div>
       )}
 
-      <div className="flex items-center gap-4 mb-8">
-        <button 
-          onClick={() => onNavigate('select-template')}
-          className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors text-slate-500 dark:text-slate-400"
-          title="Back to Templates"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-        </button>
-        <h2 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">
-          New Log
-        </h2>
-      </div>
+      <ViewHeader 
+        title="New Log" 
+        onBack={() => onNavigate('select-template')} 
+        backTitle="Back to Templates"
+      />
 
       <div className="bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl border-y md:border-x border-slate-200 dark:border-slate-800 rounded-3xl shadow-xl shadow-blue-900/5 dark:shadow-black/20 p-6 md:p-8 flex flex-col mb-2">
         <div className="mb-2">

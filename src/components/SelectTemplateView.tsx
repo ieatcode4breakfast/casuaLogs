@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getTemplates, type Template } from '../services/templateService';
+import { ViewHeader } from './ViewHeader';
 
 interface SelectTemplateViewProps {
   onNavigate: (view: 'home' | 'create-template' | 'create-log', id?: string) => void;
@@ -37,17 +38,12 @@ export function SelectTemplateView({ onNavigate }: SelectTemplateViewProps) {
   }
 
   return (
-    <main className="max-w-5xl mx-auto px-4 md:px-6 py-8 md:py-12 flex flex-col min-h-[80vh]">
-      <div className="flex items-center gap-4 mb-8">
-        <button 
-          onClick={() => onNavigate('home')}
-          className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors text-slate-500 dark:text-slate-400"
-          title="Back to Home"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-        </button>
-        <h2 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Choose a template</h2>
-      </div>
+    <main className="max-w-5xl mx-auto md:px-6 py-8 md:py-12 flex flex-col min-h-[80vh]">
+      <ViewHeader 
+        title="Choose a template" 
+        onBack={() => onNavigate('home')} 
+        backTitle="Back to Home"
+      />
 
       {templates.length === 0 ? (
         <div className="w-full md:max-w-md mx-auto px-6 py-10 md:p-10 flex flex-col items-center text-center bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl border-y md:border-x border-slate-200 dark:border-slate-800 rounded-3xl shadow-xl shadow-blue-900/5 dark:shadow-black/20">
@@ -70,14 +66,14 @@ export function SelectTemplateView({ onNavigate }: SelectTemplateViewProps) {
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 px-4 md:px-0">
           {templates.map(template => (
             <div 
               key={template.id} 
               onClick={() => onNavigate('create-log', template.id)}
               className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-sm border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 flex flex-col cursor-pointer group"
             >
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{template.name}</h3>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2">{template.name}</h3>
             </div>
           ))}
         </div>
