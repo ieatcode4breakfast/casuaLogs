@@ -3,7 +3,7 @@ import { getTemplates } from '../services/templateService';
 import { getLogs, type Log } from '../services/logService';
 
 interface HomeViewProps {
-  onNavigate: (view: 'home' | 'create-template' | 'select-template', id?: string) => void;
+  onNavigate: (view: 'home' | 'create-template' | 'select-template' | 'create-log' | 'view-log', id?: string) => void;
   currentTab: 'logs' | 'templates';
   onTabChange: (tab: 'logs' | 'templates') => void;
 }
@@ -118,6 +118,7 @@ export function HomeView({ onNavigate, currentTab, onTabChange }: HomeViewProps)
                 return (
                   <div 
                     key={log.id} 
+                    onClick={() => onNavigate('view-log', log.id)}
                     className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-sm border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 flex flex-col cursor-pointer group"
                   >
                     <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2">

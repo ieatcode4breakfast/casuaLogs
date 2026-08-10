@@ -3,13 +3,15 @@ import { HomeView } from './components/HomeView'
 import { CreateTemplateView } from './components/CreateTemplateView'
 import { SelectTemplateView } from './components/SelectTemplateView'
 import { CreateLogView } from './components/CreateLogView'
+import { ViewLogView } from './components/ViewLogView'
 
-export type ViewState = 'home' | 'create-template' | 'select-template' | 'create-log';
+export type ViewState = 'home' | 'create-template' | 'select-template' | 'create-log' | 'view-log';
 
 function App() {
   const [currentView, setCurrentView] = useState<ViewState>('home')
   const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null)
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null)
+  const [viewingLogId, setViewingLogId] = useState<string | null>(null)
   const [homeTab, setHomeTab] = useState<'logs' | 'templates'>('logs')
   
   const [dark, setDark] = useState(() => {
@@ -29,12 +31,19 @@ function App() {
     if (view === 'create-template') {
       setEditingTemplateId(id || null)
       setSelectedTemplateId(null)
+      setViewingLogId(null)
     } else if (view === 'create-log') {
       setSelectedTemplateId(id || null)
       setEditingTemplateId(null)
+      setViewingLogId(null)
+    } else if (view === 'view-log') {
+      setViewingLogId(id || null)
+      setEditingTemplateId(null)
+      setSelectedTemplateId(null)
     } else {
       setEditingTemplateId(null)
       setSelectedTemplateId(null)
+      setViewingLogId(null)
     }
   }
 
@@ -67,6 +76,7 @@ function App() {
       {currentView === 'create-template' && <CreateTemplateView onNavigate={handleNavigate} editingTemplateId={editingTemplateId} />}
       {currentView === 'select-template' && <SelectTemplateView onNavigate={handleNavigate} />}
       {currentView === 'create-log' && selectedTemplateId && <CreateLogView onNavigate={handleNavigate} templateId={selectedTemplateId} />}
+      {currentView === 'view-log' && viewingLogId && <ViewLogView onNavigate={handleNavigate} logId={viewingLogId} />}
     </div>
   )
 }
