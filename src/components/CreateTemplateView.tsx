@@ -1,5 +1,6 @@
 import { useState, useReducer } from 'react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
+import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
@@ -33,7 +34,7 @@ function SortableBlockItem({ id, isEditing, children }: { id: string; isEditing:
           ref={setActivatorNodeRef} 
           {...attributes} 
           {...listeners} 
-          className="absolute -left-6 top-1/2 -translate-y-1/2 p-1 cursor-grab active:cursor-grabbing text-slate-300 dark:text-slate-600 hover:text-slate-500 dark:hover:text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity z-10 hidden md:flex items-center justify-center outline-none"
+          className="absolute -left-6 top-1/2 -translate-y-1/2 p-1 cursor-grab active:cursor-grabbing touch-none text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 z-10 flex items-center justify-center outline-none"
           aria-label="Drag to reorder"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="12" r="1.5"/><circle cx="9" cy="5" r="1.5"/><circle cx="9" cy="19" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="15" cy="5" r="1.5"/><circle cx="15" cy="19" r="1.5"/></svg>
@@ -192,7 +193,7 @@ export function CreateTemplateView({ onNavigate }: CreateTemplateViewProps) {
           )}
 
           {blocks.length > 0 && (
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <DndContext sensors={sensors} collisionDetection={closestCenter} modifiers={[restrictToVerticalAxis]} onDragEnd={handleDragEnd}>
               <div className="flex flex-col w-full mb-2">
                 <SortableContext items={blocks.map(b => b.id)} strategy={verticalListSortingStrategy}>
                   {blocks.map(block => (
@@ -218,19 +219,19 @@ export function CreateTemplateView({ onNavigate }: CreateTemplateViewProps) {
                         className={`flex flex-col gap-2 transition-all border border-transparent cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-lg -mx-4 px-4 w-full ${block.type === 'header' ? 'pt-6' : 'pt-2'}`}
                       >
                         {block.type === 'header' && (
-                          <div className={`w-full break-words whitespace-pre-wrap text-slate-900 dark:text-white ${block.level === 1 ? 'text-3xl font-black tracking-tight' : block.level === 2 ? 'text-2xl font-bold tracking-tight' : 'text-xl font-bold'}`}>
+                          <div className={`w-full wrap-break-word whitespace-pre-wrap text-slate-900 dark:text-white ${block.level === 1 ? 'text-3xl font-black tracking-tight' : block.level === 2 ? 'text-2xl font-bold tracking-tight' : 'text-xl font-bold'}`}>
                             {block.text}
                           </div>
                         )}
                         {block.type === 'paragraph' && (
-                          <div className="w-full break-words whitespace-pre-wrap text-slate-700 dark:text-slate-300 text-sm md:text-base leading-relaxed">
+                          <div className="w-full wrap-break-word whitespace-pre-wrap text-slate-700 dark:text-slate-300 text-sm md:text-base leading-relaxed">
                             {block.text}
                           </div>
                         )}
                         {block.type === 'text' && (
                           <div className="w-full flex flex-col gap-2 pointer-events-none">
                             {block.label && (
-                              <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1 break-words whitespace-pre-wrap w-full">
+                              <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1 wrap-break-word whitespace-pre-wrap w-full">
                                 {block.label}
                               </label>
                             )}
@@ -318,7 +319,7 @@ export function CreateTemplateView({ onNavigate }: CreateTemplateViewProps) {
                       maxLength={1000}
                       value={pendingBlockText}
                       onChange={e => setPendingBlockText(e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 min-h-[100px] resize-none"
+                      className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 min-h-25 resize-none"
                       autoFocus
                       placeholder="Enter text..."
                     />
@@ -488,7 +489,7 @@ export function CreateTemplateView({ onNavigate }: CreateTemplateViewProps) {
                     maxLength={1000}
                     value={pendingBlockText}
                     onChange={e => setPendingBlockText(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 min-h-[100px] resize-none"
+                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 min-h-25 resize-none"
                     autoFocus
                     placeholder="Enter text..."
                   />
