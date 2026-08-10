@@ -34,6 +34,7 @@ export interface Log {
 export interface SaveLogPayload {
   title: string;
   blocks: LogBlock[];
+  editingId?: string | null;
 }
 
 export async function getLogs(): Promise<Log[]> {
@@ -41,7 +42,7 @@ export async function getLogs(): Promise<Log[]> {
 }
 
 export async function saveLog(payload: SaveLogPayload): Promise<void> {
-  const { title, blocks } = payload;
+  const { title, blocks, editingId } = payload;
   
   const trimmedTitle = title?.trim() || '';
 
@@ -71,6 +72,19 @@ export async function saveLog(payload: SaveLogPayload): Promise<void> {
   }
 
   const existing = await getLogs();
+
+  if (editingId) {
+    const index = existing.findIndex(l => l.id === editingId);
+    if (index !== -1) {
+      existing[index] = {
+        ...existing[index],
+        title: trimmedTitle,
+        blocks
+      };
+      await set('logs', existing);
+      return;
+    }
+  }
 
   const timestamp = getUtcTimestamp();
   const newLog: Log = {

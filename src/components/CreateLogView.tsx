@@ -1,15 +1,16 @@
 import { useState, useEffect } from 'react';
-import { getTemplates, type Template } from '../services/templateService';
-import { saveLog, type LogBlock } from '../services/logService';
+import { getTemplates } from '../services/templateService';
+import { getLogs, saveLog, type LogBlock } from '../services/logService';
 import { ViewHeader } from './ViewHeader';
 
 interface CreateLogViewProps {
-  onNavigate: (view: 'home' | 'create-template' | 'select-template') => void;
-  templateId: string;
+  onNavigate: (view: 'home' | 'create-template' | 'select-template' | 'view-log', id?: string) => void;
+  templateId?: string;
+  editingLogId?: string;
 }
 
-export function CreateLogView({ onNavigate, templateId }: CreateLogViewProps) {
-  const [template, setTemplate] = useState<Template | null>(null);
+export function CreateLogView({ onNavigate, templateId, editingLogId }: CreateLogViewProps) {
+  const [isReady, setIsReady] = useState(false);
   const [title, setTitle] = useState('');
   const [blocks, setBlocks] = useState<LogBlock[]>([]);
   const [loading, setLoading] = useState(true);
@@ -18,18 +19,28 @@ export function CreateLogView({ onNavigate, templateId }: CreateLogViewProps) {
   useEffect(() => {
     async function loadTemplate() {
       try {
-        const templates = await getTemplates();
-        const found = templates.find(t => t.id === templateId);
-        if (found) {
-          setTemplate(found);
-          setTitle(found.name);
-          const initialBlocks: LogBlock[] = found.blocks.map(b => {
-            if (b.type === 'text') {
-              return { ...b, value: '' } as LogBlock;
-            }
-            return { ...b } as LogBlock;
-          });
-          setBlocks(initialBlocks);
+        if (editingLogId) {
+          const logs = await getLogs();
+          const log = logs.find(l => l.id === editingLogId);
+          if (log) {
+            setTitle(log.title);
+            setBlocks(log.blocks);
+            setIsReady(true);
+          }
+        } else if (templateId) {
+          const templates = await getTemplates();
+          const found = templates.find(t => t.id === templateId);
+          if (found) {
+            setTitle(found.name);
+            const initialBlocks: LogBlock[] = found.blocks.map(b => {
+              if (b.type === 'text') {
+                return { ...b, value: '' } as LogBlock;
+              }
+              return { ...b } as LogBlock;
+            });
+            setBlocks(initialBlocks);
+            setIsReady(true);
+          }
         }
       } catch (e) {
         console.error('Failed to load template', e);
@@ -38,7 +49,7 @@ export function CreateLogView({ onNavigate, templateId }: CreateLogViewProps) {
       }
     }
     loadTemplate();
-  }, [templateId]);
+  }, [templateId, editingLogId]);
 
   useEffect(() => {
     if (toastMessage) {
@@ -57,10 +68,11 @@ export function CreateLogView({ onNavigate, templateId }: CreateLogViewProps) {
 
   const handleSaveLog = async () => {
     try {
-      await saveLog({ title, blocks });
+      await saveLog({ title, blocks, editingId: editingLogId });
       onNavigate('home');
-    } catch (e: any) {
-      setToastMessage(e.message || "Failed to save log");
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Failed to save log";
+      setToastMessage(message);
     }
   };
 
@@ -75,7 +87,7 @@ export function CreateLogView({ onNavigate, templateId }: CreateLogViewProps) {
     );
   }
 
-  if (!template) {
+  if (!isReady) {
     return (
       <main className="max-w-3xl mx-auto px-4 py-10 text-center">
         <h2 className="text-xl font-bold text-red-500">Template not found</h2>
@@ -95,9 +107,9 @@ export function CreateLogView({ onNavigate, templateId }: CreateLogViewProps) {
       )}
 
       <ViewHeader 
-        title="New Log" 
-        onBack={() => onNavigate('select-template')} 
-        backTitle="Back to Templates"
+        title={editingLogId ? "Edit Log" : "New Log"} 
+        onBack={() => editingLogId ? onNavigate('view-log', editingLogId) : onNavigate('select-template')} 
+        backTitle={editingLogId ? "Back to Log" : "Back to Templates"}
       />
 
       <div className="bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl border-y md:border-x border-slate-200 dark:border-slate-800 rounded-3xl shadow-xl shadow-blue-900/5 dark:shadow-black/20 p-6 md:p-8 flex flex-col mb-2">
@@ -193,7 +205,7 @@ export function CreateLogView({ onNavigate, templateId }: CreateLogViewProps) {
           </div>
         </div>
 
-        <div className="flex justify-end pt-8 border-t border-slate-200 dark:border-slate-800">
+        <div className="flex justify-end">
           <button
             type="button"
             onClick={handleSaveLog}

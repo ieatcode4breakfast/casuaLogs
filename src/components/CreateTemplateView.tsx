@@ -302,7 +302,7 @@ export function CreateTemplateView({ onNavigate, editingTemplateId }: CreateTemp
         </div>
 
         {/* Action Buttons */}
-        <div className="flex justify-between items-center pt-4 border-t border-slate-200 dark:border-slate-800">
+        <div className="flex justify-between items-center">
           <div>
             {editingTemplateId && (
               <button

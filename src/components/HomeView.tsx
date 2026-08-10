@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getTemplates } from '../services/templateService';
 import { getLogs, type Log } from '../services/logService';
+import { Card } from './Card';
 
 interface HomeViewProps {
   onNavigate: (view: 'home' | 'create-template' | 'select-template' | 'create-log' | 'view-log', id?: string) => void;
@@ -8,10 +9,13 @@ interface HomeViewProps {
   onTabChange: (tab: 'logs' | 'templates') => void;
 }
 
+type SortOption = 'last-modified' | 'name';
+
 export function HomeView({ onNavigate, currentTab, onTabChange }: HomeViewProps) {
   const [templates, setTemplates] = useState<any[]>([]);
   const [logs, setLogs] = useState<Log[]>([]);
   const [loading, setLoading] = useState(true);
+  const [sortOption, setSortOption] = useState<SortOption>('last-modified');
 
   useEffect(() => {
     async function loadData() {
@@ -40,6 +44,27 @@ export function HomeView({ onNavigate, currentTab, onTabChange }: HomeViewProps)
     return 'Empty Log';
   };
 
+  const sortedLogs = [...logs].sort((a, b) => {
+    if (sortOption === 'name') {
+      const nameCmp = (a.title || getLogPreview(a)).localeCompare(b.title || getLogPreview(b));
+      return nameCmp !== 0 ? nameCmp : new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    }
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
+
+  const sortedTemplates = [...templates].sort((a, b) => {
+    if (sortOption === 'name') {
+      const nameCmp = a.name.localeCompare(b.name);
+      if (nameCmp !== 0) return nameCmp;
+      const aTime = new Date(a.updatedAt || a.createdAt).getTime();
+      const bTime = new Date(b.updatedAt || b.createdAt).getTime();
+      return bTime - aTime;
+    }
+    const aTime = new Date(a.updatedAt || a.createdAt).getTime();
+    const bTime = new Date(b.updatedAt || b.createdAt).getTime();
+    return bTime - aTime;
+  });
+
   if (loading) {
     return (
       <main className="max-w-5xl mx-auto md:px-6 py-10 md:py-20 flex flex-col items-center justify-center min-h-[80vh]">
@@ -53,7 +78,7 @@ export function HomeView({ onNavigate, currentTab, onTabChange }: HomeViewProps)
 
   return (
     <main className="max-w-5xl mx-auto px-4 md:px-6 py-8 md:py-12 flex flex-col min-h-[80vh]">
-      <div className="flex space-x-1 bg-slate-100 dark:bg-slate-800/50 p-1 rounded-xl mb-8 self-start shadow-sm border border-slate-200 dark:border-slate-800">
+      <div className="flex space-x-1 bg-slate-100 dark:bg-slate-800/50 p-1 rounded-xl mb-4 self-start shadow-sm border border-slate-200 dark:border-slate-800">
         <button
           onClick={() => onTabChange('logs')}
           className={`px-6 py-2.5 text-sm font-semibold rounded-lg transition-all ${
@@ -98,9 +123,8 @@ export function HomeView({ onNavigate, currentTab, onTabChange }: HomeViewProps)
             </button>
           </div>
         ) : (
-          <div className="w-full flex flex-col gap-6">
+          <div className="w-full flex flex-col gap-4">
             <div className="flex justify-between items-center px-2 md:px-0">
-              <h2 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Logs</h2>
               <button
                 type="button"
                 onClick={() => onNavigate('select-template')}
@@ -109,26 +133,26 @@ export function HomeView({ onNavigate, currentTab, onTabChange }: HomeViewProps)
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 <span>New</span>
               </button>
+              <div className="flex items-center gap-2">
+                <label htmlFor="sort-logs" className="text-sm font-semibold text-slate-500">Sort by:</label>
+                <select id="sort-logs" value={sortOption} onChange={(e) => setSortOption(e.target.value as SortOption)} className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500/50 cursor-pointer">
+                  <option value="last-modified">Last Modified</option>
+                  <option value="name">Name</option>
+                </select>
+              </div>
             </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {logs.slice().reverse().map(log => {
+              {sortedLogs.map(log => {
                 const preview = log.title || getLogPreview(log);
                 return (
-                  <div 
-                    key={log.id} 
+                  <Card
+                    key={log.id}
+                    title={preview}
                     onClick={() => onNavigate('view-log', log.id)}
-                    className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-sm border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 flex flex-col cursor-pointer group"
-                  >
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2">
-                      {preview}
-                    </h3>
-                    <div className="text-sm text-slate-500 dark:text-slate-400 mt-auto pt-4 flex justify-end items-center border-t border-slate-100 dark:border-slate-800/60">
-                      <span className="text-xs text-right font-medium">
-                        Last modified: {new Date(log.createdAt).toLocaleDateString()}
-                      </span>
-                    </div>
-                  </div>
+                    color="blue"
+                    date={`Last modified: ${new Date(log.createdAt).toLocaleDateString()}`}
+                  />
                 );
               })}
             </div>
@@ -155,9 +179,8 @@ export function HomeView({ onNavigate, currentTab, onTabChange }: HomeViewProps)
           </button>
         </div>
       ) : (
-        <div className="w-full flex flex-col gap-6">
+        <div className="w-full flex flex-col gap-4">
           <div className="flex justify-between items-center px-2 md:px-0">
-            <h2 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Templates</h2>
             <button
               type="button"
               onClick={() => onNavigate('create-template')}
@@ -166,23 +189,25 @@ export function HomeView({ onNavigate, currentTab, onTabChange }: HomeViewProps)
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
               <span>New</span>
             </button>
+            <div className="flex items-center gap-2">
+              <label htmlFor="sort-templates" className="text-sm font-semibold text-slate-500">Sort by:</label>
+              <select id="sort-templates" value={sortOption} onChange={(e) => setSortOption(e.target.value as SortOption)} className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500/50 cursor-pointer">
+                <option value="last-modified">Last Modified</option>
+                <option value="name">Name</option>
+              </select>
+            </div>
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {templates.map(template => (
-              <div 
-                key={template.id} 
+            {sortedTemplates.map(template => (
+              <Card
+                key={template.id}
+                title={template.name}
                 onClick={() => onNavigate('create-template', template.id)}
-                className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-sm border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 flex flex-col cursor-pointer group"
-              >
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors line-clamp-2">{template.name}</h3>
-                <div className="text-sm text-slate-500 dark:text-slate-400 mt-auto pt-4 flex justify-between items-center">
-                  <span>{template.blocks.length} block{template.blocks.length !== 1 ? 's' : ''}</span>
-                  <span className="text-xs text-right">
-                    Last modified: {new Date(template.updatedAt || template.createdAt).toLocaleDateString()}
-                  </span>
-                </div>
-              </div>
+                color="green"
+                leftFooterNode={`${template.blocks.length} block${template.blocks.length !== 1 ? 's' : ''}`}
+                date={`Last modified: ${new Date(template.updatedAt || template.createdAt).toLocaleDateString()}`}
+              />
             ))}
           </div>
         </div>

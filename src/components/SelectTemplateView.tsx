@@ -1,14 +1,18 @@
 import { useState, useEffect } from 'react';
 import { getTemplates, type Template } from '../services/templateService';
 import { ViewHeader } from './ViewHeader';
+import { Card } from './Card';
 
 interface SelectTemplateViewProps {
   onNavigate: (view: 'home' | 'create-template' | 'create-log', id?: string) => void;
 }
 
+type SortOption = 'last-modified' | 'name';
+
 export function SelectTemplateView({ onNavigate }: SelectTemplateViewProps) {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
+  const [sortOption, setSortOption] = useState<SortOption>('last-modified');
 
   useEffect(() => {
     async function loadTemplates() {
@@ -25,6 +29,19 @@ export function SelectTemplateView({ onNavigate }: SelectTemplateViewProps) {
     }
     loadTemplates();
   }, []);
+
+  const sortedTemplates = [...templates].sort((a, b) => {
+    if (sortOption === 'name') {
+      const nameCmp = a.name.localeCompare(b.name);
+      if (nameCmp !== 0) return nameCmp;
+      const aTime = new Date(a.updatedAt || a.createdAt).getTime();
+      const bTime = new Date(b.updatedAt || b.createdAt).getTime();
+      return bTime - aTime;
+    }
+    const aTime = new Date(a.updatedAt || a.createdAt).getTime();
+    const bTime = new Date(b.updatedAt || b.createdAt).getTime();
+    return bTime - aTime;
+  });
 
   if (loading) {
     return (
@@ -66,16 +83,27 @@ export function SelectTemplateView({ onNavigate }: SelectTemplateViewProps) {
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 px-4 md:px-0">
-          {templates.map(template => (
-            <div 
-              key={template.id} 
-              onClick={() => onNavigate('create-log', template.id)}
-              className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-sm border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 flex flex-col cursor-pointer group"
-            >
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2">{template.name}</h3>
+        <div className="w-full flex flex-col gap-4">
+          <div className="flex justify-end items-center px-4 md:px-0">
+            <div className="flex items-center gap-2">
+              <label htmlFor="sort-select-template" className="text-sm font-semibold text-slate-500">Sort by:</label>
+              <select id="sort-select-template" value={sortOption} onChange={(e) => setSortOption(e.target.value as SortOption)} className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500/50 cursor-pointer">
+                <option value="last-modified">Last Modified</option>
+                <option value="name">Name</option>
+              </select>
             </div>
-          ))}
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 px-4 md:px-0">
+            {sortedTemplates.map(template => (
+              <Card
+                key={template.id}
+                title={template.name}
+                onClick={() => onNavigate('create-log', template.id)}
+                color="blue"
+                date={`Last modified: ${new Date(template.updatedAt || template.createdAt).toLocaleDateString()}`}
+              />
+            ))}
+          </div>
         </div>
       )}
     </main>

@@ -58,4 +58,47 @@ describe('logService', () => {
 
     expect(set).toHaveBeenCalledWith('logs', []);
   });
+
+  it('updates an existing log when editingId is provided', async () => {
+    const existingLog = {
+      id: 'log-123',
+      title: 'Original Title',
+      createdAt: '2023-01-01T00:00:00.000Z',
+      blocks: [],
+    };
+
+    vi.mocked(get).mockResolvedValue([existingLog]);
+
+    await saveLog({
+      title: 'Updated Title',
+      blocks: [{ id: 'b1', type: 'paragraph', text: 'New content' }],
+      editingId: 'log-123'
+    });
+
+    const setCall = vi.mocked(set).mock.calls[0];
+    expect(setCall[0]).toBe('logs');
+
+    const updatedLogs = setCall[1];
+    expect(updatedLogs).toHaveLength(1);
+    expect(updatedLogs[0].id).toBe('log-123'); // ID unchanged
+    expect(updatedLogs[0].createdAt).toBe('2023-01-01T00:00:00.000Z'); // Created at unchanged
+    expect(updatedLogs[0].title).toBe('Updated Title'); // Title updated
+    expect(updatedLogs[0].blocks[0].text).toBe('New content'); // Blocks updated
+  });
+
+  it('creates a new log when editingId is not found', async () => {
+    vi.mocked(get).mockResolvedValue([]);
+
+    await saveLog({
+      title: 'New Log',
+      blocks: [{ id: 'b1', type: 'paragraph', text: 'Content' }],
+      editingId: 'missing-id'
+    });
+
+    const setCall = vi.mocked(set).mock.calls[0];
+    const logs = setCall[1];
+    expect(logs).toHaveLength(1);
+    expect(logs[0].id).not.toBe('missing-id');
+    expect(logs[0].title).toBe('New Log');
+  });
 });

@@ -5,7 +5,7 @@ import { SelectTemplateView } from './components/SelectTemplateView'
 import { CreateLogView } from './components/CreateLogView'
 import { ViewLogView } from './components/ViewLogView'
 
-export type ViewState = 'home' | 'create-template' | 'select-template' | 'create-log' | 'view-log';
+export type ViewState = 'home' | 'create-template' | 'select-template' | 'create-log' | 'view-log' | 'edit-log';
 
 function App() {
   const [currentView, setCurrentView] = useState<ViewState>('home')
@@ -37,6 +37,10 @@ function App() {
       setEditingTemplateId(null)
       setViewingLogId(null)
     } else if (view === 'view-log') {
+      setViewingLogId(id || null)
+      setEditingTemplateId(null)
+      setSelectedTemplateId(null)
+    } else if (view === 'edit-log') {
       setViewingLogId(id || null)
       setEditingTemplateId(null)
       setSelectedTemplateId(null)
@@ -76,6 +80,7 @@ function App() {
       {currentView === 'create-template' && <CreateTemplateView onNavigate={handleNavigate} editingTemplateId={editingTemplateId} />}
       {currentView === 'select-template' && <SelectTemplateView onNavigate={handleNavigate} />}
       {currentView === 'create-log' && selectedTemplateId && <CreateLogView onNavigate={handleNavigate} templateId={selectedTemplateId} />}
+      {currentView === 'edit-log' && viewingLogId && <CreateLogView onNavigate={handleNavigate} editingLogId={viewingLogId} />}
       {currentView === 'view-log' && viewingLogId && <ViewLogView onNavigate={handleNavigate} logId={viewingLogId} />}
     </div>
   )
