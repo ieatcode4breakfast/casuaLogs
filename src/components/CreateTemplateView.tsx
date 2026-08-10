@@ -6,7 +6,7 @@ import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrate
 import { CSS } from '@dnd-kit/utilities';
 
 import { templateReducer } from '../reducers/templateReducer';
-import { saveTemplate } from '../services/templateService';
+import { saveTemplate, deleteTemplate } from '../services/templateService';
 
 interface CreateTemplateViewProps {
   onNavigate: (view: 'home' | 'create-template') => void;
@@ -78,6 +78,19 @@ export function CreateTemplateView({ onNavigate, editingTemplateId }: CreateTemp
       const oldIndex = blocks.findIndex((i) => i.id === active.id);
       const newIndex = blocks.findIndex((i) => i.id === over.id);
       dispatch({ type: 'REORDER_BLOCKS', payload: { fromIndex: oldIndex, toIndex: newIndex } });
+    }
+  };
+
+  const handleDeleteTemplate = async () => {
+    if (!editingTemplateId) return;
+    if (window.confirm('Are you sure you want to delete this template? This cannot be undone.')) {
+      try {
+        await deleteTemplate(editingTemplateId);
+        onNavigate('home');
+      } catch (e: any) {
+        setToastMessage(e.message || "Failed to delete template");
+        setTimeout(() => setToastMessage(null), 3000);
+      }
     }
   };
 
@@ -201,6 +214,7 @@ export function CreateTemplateView({ onNavigate, editingTemplateId }: CreateTemp
           <input
             type="text"
             id="template-name"
+            maxLength={50}
             value={templateName}
             onChange={(e) => setTemplateName(e.target.value)}
             placeholder="e.g. Daily Workout, Meeting Notes..."
@@ -306,8 +320,20 @@ export function CreateTemplateView({ onNavigate, editingTemplateId }: CreateTemp
           </div>
         </div>
 
-        {/* Save Template Button */}
-        <div className="flex justify-end pt-4 border-t border-slate-200 dark:border-slate-800">
+        {/* Action Buttons */}
+        <div className="flex justify-between items-center pt-4 border-t border-slate-200 dark:border-slate-800">
+          <div>
+            {editingTemplateId && (
+              <button
+                type="button"
+                onClick={handleDeleteTemplate}
+                className="cursor-pointer group relative inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold rounded-xl text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/50 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-500"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
+                <span>Delete</span>
+              </button>
+            )}
+          </div>
           <button
             type="button"
             onClick={handleSaveTemplate}
@@ -317,7 +343,7 @@ export function CreateTemplateView({ onNavigate, editingTemplateId }: CreateTemp
                 : 'cursor-pointer hover:bg-blue-700 dark:hover:bg-blue-400 hover:shadow-lg hover:shadow-blue-500/30 active:scale-95'
             }`}
           >
-            <span>{editingTemplateId ? 'Update Template' : 'Save Template'}</span>
+            <span>Save Template</span>
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" /><polyline points="17 21 17 13 7 13 7 21" /><polyline points="7 3 7 8 15 8" /></svg>
           </button>
         </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { get } from 'idb-keyval';
+import { getTemplates } from '../services/templateService';
 
 interface HomeViewProps {
   onNavigate: (view: 'home' | 'create-template', id?: string) => void;
@@ -14,7 +14,7 @@ export function HomeView({ onNavigate, currentTab, onTabChange }: HomeViewProps)
   useEffect(() => {
     async function loadTemplates() {
       try {
-        const data = await get('templates');
+        const data = await getTemplates();
         if (data) {
           setTemplates(data);
         }
@@ -126,7 +126,12 @@ export function HomeView({ onNavigate, currentTab, onTabChange }: HomeViewProps)
                 <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2 group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors">{template.name}</h3>
                 <div className="text-sm text-slate-500 dark:text-slate-400 mt-auto pt-4 flex justify-between items-center">
                   <span>{template.blocks.length} block{template.blocks.length !== 1 ? 's' : ''}</span>
-                  <span className="text-xs">{new Date(template.createdAt).toLocaleDateString()}</span>
+                  <span className="text-xs text-right">
+                    Created: {new Date(template.createdAt).toLocaleDateString()}
+                    {template.updatedAt && template.updatedAt !== template.createdAt && (
+                      <span className="ml-1 opacity-80 block">(Edited: {new Date(template.updatedAt).toLocaleDateString()})</span>
+                    )}
+                  </span>
                 </div>
               </div>
             ))}

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { saveTemplate } from './templateService';
+import { saveTemplate, getTemplates, deleteTemplate } from './templateService';
 import * as idb from 'idb-keyval';
 import type { TemplateBlock } from '../reducers/templateReducer';
 
@@ -15,6 +15,25 @@ vi.mock('../utils/time', () => ({
 describe('templateService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  describe('Read (getTemplates)', () => {
+    it('returns templates without patching legacy data', async () => {
+      const legacyTemplate = { id: 'old-1', name: 'Legacy', createdAt: '2020-01-01T00:00:00.000Z', blocks: [] };
+      vi.mocked(idb.get).mockResolvedValueOnce([legacyTemplate]);
+
+      const result = await getTemplates();
+      
+      expect(idb.get).toHaveBeenCalledWith('templates');
+      expect(result).toHaveLength(1);
+      expect(result[0].updatedAt).toBeUndefined();
+    });
+
+    it('returns empty array if no data', async () => {
+      vi.mocked(idb.get).mockResolvedValueOnce(undefined);
+      const result = await getTemplates();
+      expect(result).toEqual([]);
+    });
   });
 
   describe('Validation', () => {
@@ -72,6 +91,7 @@ describe('templateService', () => {
       expect(setArg).toHaveLength(1);
       expect(setArg[0].name).toBe('New Template');
       expect(setArg[0].createdAt).toBe('2026-08-10T12:00:00.000Z');
+      expect(setArg[0].updatedAt).toBe('2026-08-10T12:00:00.000Z');
       expect(setArg[0].id).toBeDefined();
       expect(setArg[0].blocks).toEqual(blocks);
     });
@@ -110,6 +130,7 @@ describe('templateService', () => {
       expect(setArg).toHaveLength(1);
       expect(setArg[0].id).toBe('edit-me');
       expect(setArg[0].createdAt).toBe('2025-01-01T00:00:00.000Z');
+      expect(setArg[0].updatedAt).toBe('2026-08-10T12:00:00.000Z');
       expect(setArg[0].name).toBe('Updated Name');
       expect(setArg[0].blocks).toEqual(newBlocks);
     });
@@ -125,6 +146,38 @@ describe('templateService', () => {
       // Because it appended as a fallback, it generates a new ID and timestamp
       expect(setArg[0].id).not.toBe('missing-id');
       expect(setArg[0].createdAt).toBe('2026-08-10T12:00:00.000Z');
+      expect(setArg[0].updatedAt).toBe('2026-08-10T12:00:00.000Z');
+    });
+  });
+
+  describe('Deletion', () => {
+    it('successfully deletes an existing template', async () => {
+      const existingTemplates = [
+        { id: '1', name: 'To Keep', createdAt: '2025-01-01T00:00:00.000Z', blocks: [] },
+        { id: '2', name: 'To Delete', createdAt: '2025-01-01T00:00:00.000Z', blocks: [] }
+      ];
+      vi.mocked(idb.get).mockResolvedValueOnce(existingTemplates);
+
+      await deleteTemplate('2');
+
+      expect(idb.set).toHaveBeenCalledTimes(1);
+      const setArg = vi.mocked(idb.set).mock.calls[0][1] as any[];
+      expect(setArg).toHaveLength(1);
+      expect(setArg[0].id).toBe('1');
+    });
+
+    it('silently writes back the same array if id is not found', async () => {
+      const existingTemplates = [
+        { id: '1', name: 'To Keep', createdAt: '2025-01-01T00:00:00.000Z', blocks: [] }
+      ];
+      vi.mocked(idb.get).mockResolvedValueOnce(existingTemplates);
+
+      await deleteTemplate('missing-id');
+
+      expect(idb.set).toHaveBeenCalledTimes(1);
+      const setArg = vi.mocked(idb.set).mock.calls[0][1] as any[];
+      expect(setArg).toHaveLength(1);
+      expect(setArg[0].id).toBe('1');
     });
   });
 });

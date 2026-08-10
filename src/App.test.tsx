@@ -1,5 +1,10 @@
 import { render, screen, fireEvent } from '@testing-library/react'
+import { vi } from 'vitest'
 import App from './App'
+
+vi.mock('./services/templateService', () => ({
+  getTemplates: vi.fn(() => Promise.resolve([])),
+}));
 
 Object.defineProperty(window, 'localStorage', {
   value: {
@@ -8,11 +13,11 @@ Object.defineProperty(window, 'localStorage', {
   },
 });
 
-test('renders the app shell with dark mode toggle', () => {
+test('renders the app shell with dark mode toggle', async () => {
   render(<App />)
 
   expect(screen.getByRole('heading', { name: 'casuaLogs' })).toBeTruthy()
-  expect(screen.getByRole('button', { name: 'Create Log' })).toBeTruthy()
+  expect(await screen.findByRole('button', { name: 'Create Log' })).toBeTruthy()
 
   const toggle = screen.getByRole('button', { name: 'Toggle dark mode' })
   fireEvent.click(toggle)

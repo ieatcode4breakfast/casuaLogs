@@ -2,10 +2,22 @@ import { get, set } from 'idb-keyval';
 import { getUtcTimestamp } from '../utils/time';
 import type { TemplateBlock } from '../reducers/templateReducer';
 
+export interface Template {
+  id: string;
+  name: string;
+  createdAt: string;
+  updatedAt?: string;
+  blocks: TemplateBlock[];
+}
+
 export interface SaveTemplatePayload {
   name: string;
   blocks: TemplateBlock[];
   editingId?: string | null;
+}
+
+export async function getTemplates(): Promise<Template[]> {
+  return (await get('templates')) || [];
 }
 
 export async function saveTemplate(payload: SaveTemplatePayload): Promise<void> {
@@ -38,7 +50,7 @@ export async function saveTemplate(payload: SaveTemplatePayload): Promise<void> 
   }
 
   // 2. Fetch Existing
-  const existing = (await get('templates')) || [];
+  const existing = await getTemplates();
 
   // 3. Upsert Logic
   if (editingId) {
@@ -47,7 +59,8 @@ export async function saveTemplate(payload: SaveTemplatePayload): Promise<void> 
       existing[index] = {
         ...existing[index],
         name: trimmedName,
-        blocks
+        blocks,
+        updatedAt: getUtcTimestamp()
       };
       await set('templates', existing);
       return;
@@ -55,13 +68,21 @@ export async function saveTemplate(payload: SaveTemplatePayload): Promise<void> 
   }
 
   // Fallback to Create (or if editingId was not found)
-  const newTemplate = {
+  const timestamp = getUtcTimestamp();
+  const newTemplate: Template = {
     id: crypto.randomUUID(),
     name: trimmedName,
-    createdAt: getUtcTimestamp(),
+    createdAt: timestamp,
+    updatedAt: timestamp,
     blocks
   };
   
   existing.push(newTemplate);
   await set('templates', existing);
+}
+
+export async function deleteTemplate(id: string): Promise<void> {
+  const existing = await getTemplates();
+  const filtered = existing.filter(t => t.id !== id);
+  await set('templates', filtered);
 }
