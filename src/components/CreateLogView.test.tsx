@@ -33,9 +33,22 @@ describe('CreateLogView', () => {
 
     render(<CreateLogView onNavigate={vi.fn()} templateId="1" />);
 
-    expect(await screen.findByText('Morning Routine')).toBeTruthy();
+    expect(await screen.findByDisplayValue('Daily Log')).toBeTruthy(); // The title input
+    expect(screen.getByText('Morning Routine')).toBeTruthy();
     expect(screen.getByText('Mood')).toBeTruthy();
-    expect(screen.getByRole('textbox')).toBeTruthy(); // The short input
+    expect(screen.getByLabelText('Mood')).toBeTruthy(); // The short input
+  });
+
+  it('initializes the log title with the template name', async () => {
+    const mockTemplates = [
+      { id: '1', name: 'My Special Template', createdAt: '2026-08-10', blocks: [] },
+    ];
+    (getTemplates as any).mockResolvedValue(mockTemplates);
+
+    render(<CreateLogView onNavigate={vi.fn()} templateId="1" />);
+
+    const titleInput = await screen.findByPlaceholderText('Log Title');
+    expect((titleInput as HTMLInputElement).value).toBe('My Special Template');
   });
 
   it('does not render editing controls', async () => {
@@ -68,14 +81,18 @@ describe('CreateLogView', () => {
 
     render(<CreateLogView onNavigate={mockNavigate} templateId="1" />);
 
-    const input = await screen.findByRole('textbox');
-    fireEvent.change(input, { target: { value: 'Happy' } });
+    const titleInput = await screen.findByPlaceholderText('Log Title');
+    fireEvent.change(titleInput, { target: { value: 'My Awesome Daily Log' } });
+
+    const shortInput = await screen.findByLabelText('Mood');
+    fireEvent.change(shortInput, { target: { value: 'Happy' } });
 
     const saveBtn = screen.getByRole('button', { name: 'Save Log' });
     fireEvent.click(saveBtn);
 
     await waitFor(() => {
       expect(saveLog).toHaveBeenCalledWith({
+        title: 'My Awesome Daily Log',
         blocks: [
           { id: 'b2', type: 'text', inputType: 'short', label: 'Mood', value: 'Happy' }
         ]

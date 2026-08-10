@@ -26,11 +26,13 @@ export type LogBlock = LogHeaderBlock | LogParagraphBlock | LogTextBlock;
 
 export interface Log {
   id: string;
+  title: string;
   createdAt: string;
   blocks: LogBlock[];
 }
 
 export interface SaveLogPayload {
+  title: string;
   blocks: LogBlock[];
 }
 
@@ -39,7 +41,16 @@ export async function getLogs(): Promise<Log[]> {
 }
 
 export async function saveLog(payload: SaveLogPayload): Promise<void> {
-  const { blocks } = payload;
+  const { title, blocks } = payload;
+  
+  const trimmedTitle = title?.trim() || '';
+
+  if (!trimmedTitle) {
+    throw new Error('Log title is required.');
+  }
+  if (trimmedTitle.length > 100) {
+    throw new Error('Log title cannot exceed 100 characters.');
+  }
 
   if (!blocks || blocks.length === 0) {
     throw new Error('Log must contain at least one block.');
@@ -64,6 +75,7 @@ export async function saveLog(payload: SaveLogPayload): Promise<void> {
   const timestamp = getUtcTimestamp();
   const newLog: Log = {
     id: crypto.randomUUID(),
+    title: trimmedTitle,
     createdAt: timestamp,
     blocks
   };

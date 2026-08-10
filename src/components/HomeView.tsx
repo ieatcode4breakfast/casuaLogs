@@ -113,7 +113,7 @@ export function HomeView({ onNavigate, currentTab, onTabChange }: HomeViewProps)
             
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {logs.slice().reverse().map(log => {
-                const preview = getLogPreview(log);
+                const preview = log.title || getLogPreview(log);
                 const truncatedPreview = preview.length > 60 ? preview.substring(0, 60) + '...' : preview;
                 return (
                   <div 

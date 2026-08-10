@@ -9,6 +9,7 @@ interface CreateLogViewProps {
 
 export function CreateLogView({ onNavigate, templateId }: CreateLogViewProps) {
   const [template, setTemplate] = useState<Template | null>(null);
+  const [title, setTitle] = useState('');
   const [blocks, setBlocks] = useState<LogBlock[]>([]);
   const [loading, setLoading] = useState(true);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -20,6 +21,7 @@ export function CreateLogView({ onNavigate, templateId }: CreateLogViewProps) {
         const found = templates.find(t => t.id === templateId);
         if (found) {
           setTemplate(found);
+          setTitle(found.name);
           const initialBlocks: LogBlock[] = found.blocks.map(b => {
             if (b.type === 'text') {
               return { ...b, value: '' } as LogBlock;
@@ -54,7 +56,7 @@ export function CreateLogView({ onNavigate, templateId }: CreateLogViewProps) {
 
   const handleSaveLog = async () => {
     try {
-      await saveLog({ blocks });
+      await saveLog({ title, blocks });
       onNavigate('home');
     } catch (e: any) {
       setToastMessage(e.message || "Failed to save log");
@@ -104,7 +106,24 @@ export function CreateLogView({ onNavigate, templateId }: CreateLogViewProps) {
         </h2>
       </div>
 
-      <div className="flex flex-col w-full mb-2">
+      <div className="bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl border-y md:border-x border-slate-200 dark:border-slate-800 rounded-3xl shadow-xl shadow-blue-900/5 dark:shadow-black/20 p-6 md:p-8 flex flex-col mb-2">
+        <div className="mb-2">
+          <label htmlFor="log-title" className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+            Log Title
+          </label>
+          <input
+            type="text"
+            id="log-title"
+            maxLength={100}
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Log Title"
+            className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all font-medium placeholder:text-slate-400 dark:placeholder:text-slate-500"
+          />
+        </div>
+
+        <div className="flex flex-col mb-6">
+          <div className="flex flex-col w-full mb-2">
         {blocks.map((block) => {
           if (block.type === 'header') {
             const HTag = `h${block.level + 1}` as any;
@@ -177,8 +196,10 @@ export function CreateLogView({ onNavigate, templateId }: CreateLogViewProps) {
 
           return null;
         })}
+          </div>
+        </div>
 
-        <div className="flex justify-end pt-8 border-t border-slate-200 dark:border-slate-800 mt-4">
+        <div className="flex justify-end pt-8 border-t border-slate-200 dark:border-slate-800">
           <button
             type="button"
             onClick={handleSaveLog}
