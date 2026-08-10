@@ -1,31 +1,44 @@
 import { useState, useEffect } from 'react';
 import { getTemplates } from '../services/templateService';
+import { getLogs, type Log } from '../services/logService';
 
 interface HomeViewProps {
-  onNavigate: (view: 'home' | 'create-template', id?: string) => void;
+  onNavigate: (view: 'home' | 'create-template' | 'select-template', id?: string) => void;
   currentTab: 'logs' | 'templates';
   onTabChange: (tab: 'logs' | 'templates') => void;
 }
 
 export function HomeView({ onNavigate, currentTab, onTabChange }: HomeViewProps) {
   const [templates, setTemplates] = useState<any[]>([]);
+  const [logs, setLogs] = useState<Log[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function loadTemplates() {
+    async function loadData() {
       try {
-        const data = await getTemplates();
-        if (data) {
-          setTemplates(data);
-        }
+        const [templatesData, logsData] = await Promise.all([
+          getTemplates(),
+          getLogs()
+        ]);
+        if (templatesData) setTemplates(templatesData);
+        if (logsData) setLogs(logsData);
       } catch (e) {
-        console.error('Failed to load templates', e);
+        console.error('Failed to load data', e);
       } finally {
         setLoading(false);
       }
     }
-    loadTemplates();
+    loadData();
   }, []);
+
+  const getLogPreview = (log: Log) => {
+    for (const block of log.blocks) {
+      if (block.type === 'header' && block.text) return block.text;
+      if (block.type === 'text' && block.value) return block.value;
+      if (block.type === 'paragraph' && block.text) return block.text;
+    }
+    return 'Empty Log';
+  };
 
   if (loading) {
     return (
@@ -64,24 +77,63 @@ export function HomeView({ onNavigate, currentTab, onTabChange }: HomeViewProps)
       </div>
 
       {currentTab === 'logs' ? (
-        <div className="w-full md:max-w-md mx-auto px-6 py-10 md:p-10 flex flex-col items-center text-center bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl border-y md:border-x border-slate-200 dark:border-slate-800 rounded-3xl shadow-xl shadow-blue-900/5 dark:shadow-black/20 mt-8 md:mt-12">
-          <div className="h-20 w-20 bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 rounded-full flex items-center justify-center mb-6 shadow-inner">
-            <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>
+        logs.length === 0 ? (
+          <div className="w-full md:max-w-md mx-auto px-6 py-10 md:p-10 flex flex-col items-center text-center bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl border-y md:border-x border-slate-200 dark:border-slate-800 rounded-3xl shadow-xl shadow-blue-900/5 dark:shadow-black/20 mt-8 md:mt-12">
+            <div className="h-20 w-20 bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 rounded-full flex items-center justify-center mb-6 shadow-inner">
+              <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>
+            </div>
+            <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white mb-2">
+              No logs yet
+            </h2>
+            <p className="text-slate-500 dark:text-slate-400 mb-8 max-w-sm leading-relaxed">
+              Start creating logs. You can use templates to make logging easier.
+            </p>
+            <button
+              type="button"
+              onClick={() => onNavigate('select-template')}
+              className="cursor-pointer group relative inline-flex items-center gap-2 px-8 py-3.5 text-sm font-semibold rounded-xl bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-blue-500/30 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 active:scale-95"
+            >
+              <span>Create Log</span>
+              <svg className="transition-transform duration-300 group-hover:translate-x-1" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
           </div>
-          <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white mb-2">
-            No logs yet
-          </h2>
-          <p className="text-slate-500 dark:text-slate-400 mb-8 max-w-sm leading-relaxed">
-            Start creating logs. You can use templates to make logging easier.
-          </p>
-          <button
-            type="button"
-            className="cursor-pointer group relative inline-flex items-center gap-2 px-8 py-3.5 text-sm font-semibold rounded-xl bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-blue-500/30 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 active:scale-95"
-          >
-            <span>Create Log</span>
-            <svg className="transition-transform duration-300 group-hover:translate-x-1" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          </button>
-        </div>
+        ) : (
+          <div className="w-full flex flex-col gap-6">
+            <div className="flex justify-between items-center px-2 md:px-0">
+              <h2 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Logs</h2>
+              <button
+                type="button"
+                onClick={() => onNavigate('select-template')}
+                className="cursor-pointer group relative inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-xl bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400 overflow-hidden transition-all duration-300 shadow-md shadow-blue-500/20 active:scale-95"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                <span>New</span>
+              </button>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {logs.slice().reverse().map(log => {
+                const preview = getLogPreview(log);
+                const truncatedPreview = preview.length > 60 ? preview.substring(0, 60) + '...' : preview;
+                return (
+                  <div 
+                    key={log.id} 
+                    className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-sm border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 flex flex-col cursor-pointer group"
+                  >
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2">
+                      {truncatedPreview}
+                    </h3>
+                    <div className="text-sm text-slate-500 dark:text-slate-400 mt-auto pt-4 flex justify-end items-center border-t border-slate-100 dark:border-slate-800/60">
+                      <span className="text-xs text-right font-medium">
+                        {new Date(log.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )
       ) : templates.length === 0 ? (
         <div className="w-full md:max-w-md mx-auto px-6 py-10 md:p-10 flex flex-col items-center text-center bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl border-y md:border-x border-slate-200 dark:border-slate-800 rounded-3xl shadow-xl shadow-blue-900/5 dark:shadow-black/20">
           <div className="h-20 w-20 bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center mb-6 shadow-inner">

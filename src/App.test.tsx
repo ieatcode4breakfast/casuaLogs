@@ -23,3 +23,11 @@ test('renders the app shell with dark mode toggle', async () => {
   fireEvent.click(toggle)
   expect(document.documentElement.classList.contains('dark')).toBe(true)
 })
+
+test('navigates to select-template when Create Log is clicked', async () => {
+  render(<App />)
+  const createLogBtn = await screen.findByRole('button', { name: 'Create Log' })
+  fireEvent.click(createLogBtn)
+  // App should render SelectTemplateView, which says 'No templates available' given our mock
+  expect(await screen.findByText(/No templates/i)).toBeTruthy()
+})

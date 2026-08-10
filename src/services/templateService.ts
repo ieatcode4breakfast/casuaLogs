@@ -44,8 +44,8 @@ export async function saveTemplate(payload: SaveTemplatePayload): Promise<void> 
     if (block.type === 'text' && block.label.length > 50) {
       throw new Error('Text block labels cannot exceed 50 characters.');
     }
-    if (block.type === 'paragraph' && block.text.length > 1000) {
-      throw new Error('Paragraph blocks cannot exceed 1000 characters.');
+    if (block.type === 'paragraph' && block.text.length > 5000) {
+      throw new Error('Paragraph blocks cannot exceed 5000 characters.');
     }
   }
 

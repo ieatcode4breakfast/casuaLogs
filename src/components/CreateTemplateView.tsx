@@ -25,7 +25,7 @@ function SortableBlockItem({ id, isEditing, children }: { id: string; isEditing:
   } = useSortable({ id, disabled: isEditing });
 
   const style = {
-    transform: CSS.Transform.toString(transform),
+    transform: CSS.Translate.toString(transform),
     transition,
     zIndex: isDragging ? 50 : 'auto',
   };
@@ -109,23 +109,10 @@ export function CreateTemplateView({ onNavigate, editingTemplateId }: CreateTemp
     setMenuState('configure-paragraph');
   };
 
-  const handleTextSelect = (type: 'short' | 'short-label' | 'long' | 'long-label') => {
-    if (type === 'short' || type === 'long') {
-      dispatch({
-        type: 'ADD_BLOCK',
-        payload: {
-          id: crypto.randomUUID(),
-          type: 'text',
-          inputType: type,
-          label: ''
-        }
-      });
-      setMenuState('closed');
-    } else {
-      setPendingTextType(type);
-      setPendingBlockText('');
-      setMenuState('configure-text');
-    }
+  const handleTextSelect = (type: 'short' | 'long') => {
+    setPendingTextType(type);
+    setPendingBlockText('');
+    setMenuState('configure-text');
   };
 
   const confirmAddHeader = () => {
@@ -143,13 +130,13 @@ export function CreateTemplateView({ onNavigate, editingTemplateId }: CreateTemp
   };
 
   const confirmAddText = () => {
-    if (!pendingBlockText.trim() || !pendingTextType) return;
+    if (!pendingTextType) return;
     dispatch({
       type: 'ADD_BLOCK',
       payload: {
         id: crypto.randomUUID(),
         type: 'text',
-        inputType: pendingTextType === 'short-label' ? 'short' : 'long',
+        inputType: pendingTextType as 'short' | 'long',
         label: pendingBlockText.trim()
       }
     });
@@ -170,7 +157,9 @@ export function CreateTemplateView({ onNavigate, editingTemplateId }: CreateTemp
   };
 
   const handleSaveEdit = () => {
-    if (!pendingBlockText.trim() || !editingBlockId) return;
+    if (!editingBlockId) return;
+    const block = blocks.find(b => b.id === editingBlockId);
+    if (block?.type !== 'text' && !pendingBlockText.trim()) return;
     dispatch({
       type: 'UPDATE_BLOCK',
       payload: { id: editingBlockId, text: pendingBlockText.trim() }
@@ -364,8 +353,8 @@ export function CreateTemplateView({ onNavigate, editingTemplateId }: CreateTemp
                 }
               }}
             >
-              <div className="w-full max-w-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200">
-                <div className="p-5 flex flex-col gap-4">
+              <div className="w-full max-w-sm max-h-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200">
+                <div className="p-5 flex flex-col gap-4 overflow-y-auto min-h-0">
                   <div className="flex justify-between items-center">
                     <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
                       {block.type === 'header' ? `Edit Header ${block.level}` : block.type === 'paragraph' ? 'Edit Text' : `Edit ${block.inputType === 'short' ? 'Short' : 'Long'} Text Label`}
@@ -384,14 +373,26 @@ export function CreateTemplateView({ onNavigate, editingTemplateId }: CreateTemp
                   {block.type === 'paragraph' ? (
                     <>
                       <textarea 
-                        maxLength={1000}
+                        maxLength={5000}
                         value={pendingBlockText}
                         onChange={e => setPendingBlockText(e.target.value)}
-                        className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 min-h-25 resize-none"
+                        onInput={(e) => {
+                          const target = e.target as HTMLTextAreaElement;
+                          target.style.height = 'auto';
+                          target.style.height = `${target.scrollHeight}px`;
+                        }}
+                        ref={(el) => {
+                          if (el && !el.dataset.initialized) {
+                            el.dataset.initialized = 'true';
+                            el.style.height = 'auto';
+                            el.style.height = `${el.scrollHeight}px`;
+                          }
+                        }}
+                        className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 min-h-25 resize-none overflow-hidden"
                         autoFocus
                         placeholder="Enter text..."
                       />
-                      <div className="text-xs text-right text-slate-400 -mt-2">{pendingBlockText.length}/1000</div>
+                      <div className="text-xs text-right text-slate-400 -mt-2">{pendingBlockText.length}/5000</div>
                     </>
                   ) : (
                     <>
@@ -412,7 +413,7 @@ export function CreateTemplateView({ onNavigate, editingTemplateId }: CreateTemp
                     <button onClick={() => setEditingBlockId(null)} className="cursor-pointer px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors">Cancel</button>
                     <button 
                       onClick={handleSaveEdit} 
-                      disabled={!pendingBlockText.trim()}
+                      disabled={block.type !== 'text' && !pendingBlockText.trim()}
                       className="cursor-pointer px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                     >
                       Save
@@ -511,19 +512,11 @@ export function CreateTemplateView({ onNavigate, editingTemplateId }: CreateTemp
                   </button>
                   <button onClick={() => handleTextSelect('short')} className="px-5 py-4 text-left text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors flex flex-col gap-1 text-slate-700 dark:text-slate-200 cursor-pointer">
                     <span>Short Text Input</span>
-                    <span className="text-xs text-slate-500 dark:text-slate-400 font-normal">No label</span>
-                  </button>
-                  <button onClick={() => handleTextSelect('short-label')} className="px-5 py-4 text-left text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors border-t border-slate-100 dark:border-slate-700/50 flex flex-col gap-1 text-slate-700 dark:text-slate-200 cursor-pointer">
-                    <span>Short Text Input with Label</span>
-                    <span className="text-xs text-slate-500 dark:text-slate-400 font-normal">Max 50 characters</span>
+                    <span className="text-xs text-slate-500 dark:text-slate-400 font-normal">max 50 chars</span>
                   </button>
                   <button onClick={() => handleTextSelect('long')} className="px-5 py-4 text-left text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors border-t border-slate-100 dark:border-slate-700/50 flex flex-col gap-1 text-slate-700 dark:text-slate-200 cursor-pointer">
                     <span>Long Text Input</span>
-                    <span className="text-xs text-slate-500 dark:text-slate-400 font-normal">No label</span>
-                  </button>
-                  <button onClick={() => handleTextSelect('long-label')} className="px-5 py-4 text-left text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors border-t border-slate-100 dark:border-slate-700/50 flex flex-col gap-1 text-slate-700 dark:text-slate-200 cursor-pointer">
-                    <span>Long Text Input with Label</span>
-                    <span className="text-xs text-slate-500 dark:text-slate-400 font-normal">Max 1000 characters</span>
+                    <span className="text-xs text-slate-500 dark:text-slate-400 font-normal">max 5000 chars</span>
                   </button>
                 </>
               )}
@@ -540,14 +533,13 @@ export function CreateTemplateView({ onNavigate, editingTemplateId }: CreateTemp
                     onKeyDown={e => e.key === 'Enter' && confirmAddText()}
                     className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
                     autoFocus
-                    placeholder="e.g. Notes, Age..."
+                    placeholder="Enter label"
                   />
                   <div className="text-xs text-right text-slate-400 -mt-2">{pendingBlockText.length}/50</div>
                   <div className="flex justify-end gap-3 mt-2">
                     <button onClick={() => setMenuState('text')} className="cursor-pointer px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors">Back</button>
                     <button 
                       onClick={confirmAddText} 
-                      disabled={!pendingBlockText.trim()}
                       className="cursor-pointer px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                     >
                       Confirm
@@ -561,14 +553,14 @@ export function CreateTemplateView({ onNavigate, editingTemplateId }: CreateTemp
                     Text
                   </label>
                   <textarea 
-                    maxLength={1000}
+                    maxLength={5000}
                     value={pendingBlockText}
                     onChange={e => setPendingBlockText(e.target.value)}
                     className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 min-h-25 resize-none"
                     autoFocus
                     placeholder="Enter text..."
                   />
-                  <div className="text-xs text-right text-slate-400 -mt-2">{pendingBlockText.length}/1000</div>
+                  <div className="text-xs text-right text-slate-400 -mt-2">{pendingBlockText.length}/5000</div>
                   <div className="flex justify-end gap-3 mt-2">
                     <button onClick={() => setMenuState('main')} className="cursor-pointer px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors">Back</button>
                     <button 

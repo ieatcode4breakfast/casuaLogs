@@ -70,10 +70,10 @@ describe('templateService', () => {
         .rejects.toThrow('Text block labels cannot exceed 50 characters.');
     });
 
-    it('throws if a paragraph block exceeds 1000 characters', async () => {
-      const blocks: TemplateBlock[] = [{ id: '1', type: 'paragraph', text: 'a'.repeat(1001) }];
+    it('throws if a paragraph block exceeds 5000 characters', async () => {
+      const blocks: TemplateBlock[] = [{ id: '1', type: 'paragraph', text: 'a'.repeat(5001) }];
       await expect(saveTemplate({ name: 'Valid Name', blocks }))
-        .rejects.toThrow('Paragraph blocks cannot exceed 1000 characters.');
+        .rejects.toThrow('Paragraph blocks cannot exceed 5000 characters.');
     });
   });
 

@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react'
 import { HomeView } from './components/HomeView'
 import { CreateTemplateView } from './components/CreateTemplateView'
+import { SelectTemplateView } from './components/SelectTemplateView'
+import { CreateLogView } from './components/CreateLogView'
 
-export type ViewState = 'home' | 'create-template';
+export type ViewState = 'home' | 'create-template' | 'select-template' | 'create-log';
 
 function App() {
   const [currentView, setCurrentView] = useState<ViewState>('home')
   const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null)
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null)
   const [homeTab, setHomeTab] = useState<'logs' | 'templates'>('logs')
   
   const [dark, setDark] = useState(() => {
@@ -25,8 +28,13 @@ function App() {
     setCurrentView(view)
     if (view === 'create-template') {
       setEditingTemplateId(id || null)
+      setSelectedTemplateId(null)
+    } else if (view === 'create-log') {
+      setSelectedTemplateId(id || null)
+      setEditingTemplateId(null)
     } else {
       setEditingTemplateId(null)
+      setSelectedTemplateId(null)
     }
   }
 
@@ -57,6 +65,8 @@ function App() {
 
       {currentView === 'home' && <HomeView onNavigate={handleNavigate} currentTab={homeTab} onTabChange={setHomeTab} />}
       {currentView === 'create-template' && <CreateTemplateView onNavigate={handleNavigate} editingTemplateId={editingTemplateId} />}
+      {currentView === 'select-template' && <SelectTemplateView onNavigate={handleNavigate} />}
+      {currentView === 'create-log' && selectedTemplateId && <CreateLogView onNavigate={handleNavigate} templateId={selectedTemplateId} />}
     </div>
   )
 }

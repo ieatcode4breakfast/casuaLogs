@@ -19,6 +19,22 @@ describe('templateReducer', () => {
     expect(newState[0]).toEqual(action.payload);
   });
 
+  test('adds a text block with an empty label', () => {
+    const action = {
+      type: 'ADD_BLOCK' as const,
+      payload: {
+        id: '2',
+        type: 'text' as const,
+        inputType: 'long' as const,
+        label: ''
+      }
+    };
+    const newState = templateReducer(initialState, action);
+    expect(newState).toHaveLength(1);
+    expect(newState[0]).toEqual(action.payload);
+    expect((newState[0] as Extract<TemplateBlock, { type: 'text' }>).label).toBe('');
+  });
+
   test('updates a header block text', () => {
     const state: TemplateBlock[] = [
       { id: '1', type: 'header', level: 1, text: 'Old Title' }
@@ -41,6 +57,18 @@ describe('templateReducer', () => {
     };
     const newState = templateReducer(state, action);
     expect(newState[0].type === 'text' && newState[0].label).toBe('New Label');
+  });
+
+  test('updates a text block label to be empty', () => {
+    const state: TemplateBlock[] = [
+      { id: '1', type: 'text', inputType: 'short', label: 'Old Label' }
+    ];
+    const action = {
+      type: 'UPDATE_BLOCK' as const,
+      payload: { id: '1', text: '' }
+    };
+    const newState = templateReducer(state, action);
+    expect(newState[0].type === 'text' && newState[0].label).toBe('');
   });
 
   test('deletes a block', () => {

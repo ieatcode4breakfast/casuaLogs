@@ -8,3 +8,10 @@ Our application follows a mobile-first styling approach mapping directly to Tail
 3. **"Phablet"** (`sm`): `640px` to `767px` (Large phones in landscape, small tablets).
 4. **"Tablet"** (`md`): `768px` to `1023px` (Standard iPads, tablets in portrait).
 5. **"Desktop"** (`lg` and up): `1024px` and above (Laptops, landscape tablets, and large screens).
+
+### Component-Specific Limits
+
+- **Long Text Inputs**: 
+  - Legacy: `max-h-75`
+  - Mobile: `max-h-100`
+  - Phablet & up: `max-h-125`
