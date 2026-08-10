@@ -1,8 +1,8 @@
-# casuaLogs Tech Stack
+# casualogs Tech Stack
 
 ## Principle
 
-casuaLogs is a **local-first PWA**. The browser is the primary database. The cloud is cold backup. Every architectural decision defers to this constraint: a user offline should have zero feature degradation.
+casualogs is a **local-first PWA**. The browser is the primary database. The cloud is cold backup. Every architectural decision defers to this constraint: a user offline should have zero feature degradation.
 
 **When adding any future service, the #1 priority is: free tier with generous limits.** No service that requires a credit card for production-level usage is acceptable without explicit discussion.
 

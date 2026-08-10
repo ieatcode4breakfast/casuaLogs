@@ -66,7 +66,7 @@ function App() {
           onClick={() => handleNavigate('home')}
         >
           <h1 className="font-dynapuff text-2xl font-bold tracking-tight text-blue-700 dark:text-blue-400 group-hover:text-blue-600 dark:group-hover:text-blue-300 transition-colors">
-            casuaLogs
+            casualogs
           </h1>
         </div>
         <button

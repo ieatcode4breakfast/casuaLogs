@@ -1,32 +1,26 @@
 ## Goal Description
-Currently, because this is a Single Page Application (SPA), when a user clicks a button to navigate to a new view (like saving a log and going to the preview), the browser's scroll position remains exactly where it was (often at the bottom of the page). We want to reset the scroll position to the top of the page on every view change.
+The objective is to generate a new logo for the application based on the requested minimalist design (three closed notebooks enclosed in a double-ring, solid dark blue, flat vector style) and place it in the main repository directory.
 
 ## User Review Required
-None.
+Please review the generated sample logo below.
+![Sample Logo](/home/codespace/.gemini/antigravity-cli/brain/a58e3c90-ba31-45f5-9586-6cd064a75792/casualogs_logo_1786396181256.jpg)
 
 ## Open Questions
-None.
+* Are you happy with this design? If not, please provide any tweaks or adjustments you'd like me to make before we add it to the project.
+* Do you want the logo saved specifically as `logo.jpg` in the main directory, or another filename (e.g., `icon.jpg`)?
 
 ## Proposed Changes
 
----
-### Routing Layer: App Component
-#### [MODIFY] src/App.tsx
-Update the global `handleNavigate` function to reset the scroll position to the top of the window every time the user navigates between views.
+### Assets
 
-```typescript
-  const handleNavigate = (view: ViewState, id?: string) => {
-    window.scrollTo(0, 0); // Reset scroll position to top
-    // ... existing logic ...
-```
+#### [NEW] `logo.jpg`
+I will copy the generated logo image into the root of the repository as `/workspaces/logify/logo.jpg`.
 
 ## Verification Plan
+
 ### Automated Tests
-```bash
-npx tsc --noEmit
-```
+* None.
+
 ### Manual Verification
-1. Create a log that is long enough to require scrolling.
-2. Scroll to the absolute bottom and click "Save Log".
-3. Verify that when the preview loads (`ViewLogView`), the window is scrolled all the way to the top of the page.
-4. Verify this behavior holds true when navigating anywhere else (e.g., clicking "Go Back" from the bottom of a view).
+* Ensure `logo.jpg` exists in the main directory.
+* Verify the file opens correctly and matches the approved design.

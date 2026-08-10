@@ -1,6 +1,6 @@
 # Application Schemas
 
-This document defines the core data schemas for **Templates** and **Logs**, along with their constituent layout blocks within the `casuaLogs` application.
+This document defines the core data schemas for **Templates** and **Logs**, along with their constituent layout blocks within the `casualogs` application.
 
 ## 1. Templates
 
