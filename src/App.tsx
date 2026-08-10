@@ -60,11 +60,12 @@ function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans selection:bg-blue-200 dark:selection:bg-blue-800 transition-colors duration-300 select-none">
-      <header className="sticky top-0 z-10 backdrop-blur-md bg-white/70 dark:bg-slate-950/70 border-b border-slate-200/50 dark:border-slate-800/50 px-8 py-4 flex items-center justify-between shadow-sm">
+      <header className="sticky top-0 z-10 backdrop-blur-md bg-white/70 dark:bg-slate-950/70 border-b border-slate-200/50 dark:border-slate-800/50 px-4 py-4 flex items-center justify-between shadow-sm">
         <div 
           className="flex items-center gap-3 cursor-pointer group"
           onClick={() => handleNavigate('home')}
         >
+          <img src="/icon-192.png" alt="casualogs logo" className="w-8 h-8 group-hover:scale-105 transition-transform" />
           <h1 className="font-dynapuff text-2xl font-bold tracking-tight text-blue-700 dark:text-blue-400 group-hover:text-blue-600 dark:group-hover:text-blue-300 transition-colors">
             casualogs
           </h1>

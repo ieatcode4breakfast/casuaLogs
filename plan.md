@@ -1,20 +1,21 @@
 ## Goal Description
-The objective is to generate a new logo for the application based on the requested minimalist design (three closed notebooks enclosed in a double-ring, solid dark blue, flat vector style) and place it in the main repository directory.
+The objective is to refine the inverted logo by changing its solid dark blue background to perfectly match the application's night mode background color. The application uses Tailwind's `slate-950` (`#020617` / RGB `2, 6, 23`). This will make the logo seamlessly blend into the navigation header when dark mode is active, while maintaining bold white linework.
 
 ## User Review Required
-Please review the generated sample logo below.
-![Sample Logo](/home/codespace/.gemini/antigravity-cli/brain/a58e3c90-ba31-45f5-9586-6cd064a75792/casualogs_logo_1786396181256.jpg)
-
-## Open Questions
-* Are you happy with this design? If not, please provide any tweaks or adjustments you'd like me to make before we add it to the project.
-* Do you want the logo saved specifically as `logo.jpg` in the main directory, or another filename (e.g., `icon.jpg`)?
+None. The user has pre-approved implementation via the `implementify` keyword.
 
 ## Proposed Changes
 
 ### Assets
 
-#### [NEW] `logo.jpg`
-I will copy the generated logo image into the root of the repository as `/workspaces/logify/logo.jpg`.
+#### [MODIFY] `logo.png`
+I will regenerate the inverted logo using a modified script that mathematically maps the original white background to `slate-950` (`#020617`) and the linework to pure white. 
+
+#### [MODIFY] `public/icon-64.png`
+#### [MODIFY] `public/icon-180.png`
+#### [MODIFY] `public/icon-192.png`
+#### [MODIFY] `public/icon-512.png`
+Overwrite all existing public icons with smoothly resized versions of the updated `slate-950` logo.
 
 ## Verification Plan
 
@@ -22,5 +23,5 @@ I will copy the generated logo image into the root of the repository as `/worksp
 * None.
 
 ### Manual Verification
-* Ensure `logo.jpg` exists in the main directory.
-* Verify the file opens correctly and matches the approved design.
+* Ensure `logo.png` and all `public/` icons have been successfully replaced.
+* Verify visually that the logo background matches the `slate-950` dark mode background seamlessly.
