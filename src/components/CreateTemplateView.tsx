@@ -6,6 +6,7 @@ import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrate
 import { CSS } from '@dnd-kit/utilities';
 
 import { templateReducer } from '../reducers/templateReducer';
+import { getUtcTimestamp } from '../utils/time';
 
 interface CreateTemplateViewProps {
   onNavigate: (view: 'home' | 'create-template') => void;
@@ -188,7 +189,7 @@ export function CreateTemplateView({ onNavigate, editingTemplateId }: CreateTemp
         const newTemplate = {
           id: crypto.randomUUID(),
           name: templateName.trim(),
-          createdAt: new Date().toISOString(),
+          createdAt: getUtcTimestamp(),
           blocks
         };
         existing.push(newTemplate);
