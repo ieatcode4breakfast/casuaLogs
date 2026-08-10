@@ -1,12 +1,12 @@
 import { useState, useReducer, useEffect } from 'react';
-import { get, set } from 'idb-keyval';
+import { get } from 'idb-keyval';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
 import { templateReducer } from '../reducers/templateReducer';
-import { getUtcTimestamp } from '../utils/time';
+import { saveTemplate } from '../services/templateService';
 
 interface CreateTemplateViewProps {
   onNavigate: (view: 'home' | 'create-template') => void;
@@ -162,43 +162,16 @@ export function CreateTemplateView({ onNavigate, editingTemplateId }: CreateTemp
   };
 
   const handleSaveTemplate = async () => {
-    if (!templateName.trim()) {
-      setToastMessage("Please enter a template name");
-      setTimeout(() => setToastMessage(null), 3000);
-      return;
-    }
-    if (blocks.length === 0) {
-      setToastMessage("Please add at least one block");
-      setTimeout(() => setToastMessage(null), 3000);
-      return;
-    }
-    
     try {
-      const existing = (await get('templates')) || [];
-      
-      if (editingTemplateId) {
-        const index = existing.findIndex((t: any) => t.id === editingTemplateId);
-        if (index !== -1) {
-          existing[index] = {
-            ...existing[index],
-            name: templateName.trim(),
-            blocks
-          };
-        }
-      } else {
-        const newTemplate = {
-          id: crypto.randomUUID(),
-          name: templateName.trim(),
-          createdAt: getUtcTimestamp(),
-          blocks
-        };
-        existing.push(newTemplate);
-      }
-      
-      await set('templates', existing);
+      await saveTemplate({
+        name: templateName,
+        blocks,
+        editingId: editingTemplateId
+      });
       onNavigate('home');
-    } catch (e) {
-      console.error('Failed to save template', e);
+    } catch (e: any) {
+      setToastMessage(e.message || "Failed to save template");
+      setTimeout(() => setToastMessage(null), 3000);
     }
   };
 
