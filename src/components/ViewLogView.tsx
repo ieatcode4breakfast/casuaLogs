@@ -140,7 +140,7 @@ export function ViewLogView({ onNavigate, logId }: ViewLogViewProps) {
           </div>
         </div>
 
-        <div className="flex justify-between items-center">
+        <div className="sticky bottom-6 z-20 flex justify-between items-center bg-white/90 dark:bg-slate-900/90 backdrop-blur-md p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/20 dark:shadow-black/40 mt-8">
           <button
             type="button"
             onClick={() => setShowDeleteModal(true)}
