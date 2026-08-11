@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { getTemplates } from '../services/templateService';
 import { getLogs, saveLog, type LogBlock } from '../services/logService';
 import { ViewHeader } from './ViewHeader';
+import { formatLogToMarkdown, copyToClipboard } from '../utils/clipboard';
 
 interface CreateLogViewProps {
   onNavigate: (view: 'home' | 'create-template' | 'select-template' | 'view-log', id?: string) => void;
@@ -15,6 +16,7 @@ export function CreateLogView({ onNavigate, templateId, editingLogId }: CreateLo
   const [blocks, setBlocks] = useState<LogBlock[]>([]);
   const [loading, setLoading] = useState(true);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     async function loadTemplate() {
@@ -86,6 +88,16 @@ export function CreateLogView({ onNavigate, templateId, editingLogId }: CreateLo
     } catch (e) {
       const message = e instanceof Error ? e.message : "Failed to save log";
       setToastMessage(message);
+    }
+  };
+
+  const handleCopy = async () => {
+    const text = formatLogToMarkdown(title, blocks);
+    const success = await copyToClipboard(text);
+    if (success) {
+      setToastMessage("Copied to clipboard!");
+    } else {
+      setToastMessage("Failed to copy");
     }
   };
 
@@ -249,7 +261,15 @@ export function CreateLogView({ onNavigate, templateId, editingLogId }: CreateLo
           </div>
         </div>
 
-        <div className="sticky bottom-6 z-20 flex justify-end bg-white/90 dark:bg-slate-900/90 backdrop-blur-md p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/20 dark:shadow-black/40 mt-8">
+        {/* Action Buttons */}
+        <div className="hidden min-[400px]:flex sticky bottom-6 z-20 justify-between items-center bg-white/90 dark:bg-slate-900/90 backdrop-blur-md p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/20 dark:shadow-black/40 mt-8">
+          <button
+            type="button"
+            onClick={handleCopy}
+            className="cursor-pointer px-6 py-2.5 rounded-xl font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors"
+          >
+            Copy
+          </button>
           <button
             type="button"
             onClick={handleSaveLog}
@@ -259,6 +279,47 @@ export function CreateLogView({ onNavigate, templateId, editingLogId }: CreateLo
             <span>Save Log</span>
           </button>
         </div>
+
+      </div>
+      {/* Mobile FAB Menu */}
+      <div className="flex min-[400px]:hidden fixed bottom-6 right-6 z-30 flex-col items-end gap-3">
+        {isMobileMenuOpen && (
+          <div 
+            className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-30" 
+            onClick={() => setIsMobileMenuOpen(false)}
+          ></div>
+        )}
+        
+        <div className={`relative z-40 flex flex-col items-end gap-3 transition-all duration-300 origin-bottom ${isMobileMenuOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-50 pointer-events-none'}`}>
+          <button
+            type="button"
+            onClick={() => { handleCopy(); setIsMobileMenuOpen(false); }}
+            className="flex items-center justify-center w-12 h-12 rounded-full bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 shadow-lg"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+          </button>
+          
+          <button
+            type="button"
+            onClick={() => { handleSaveLog(); setIsMobileMenuOpen(false); }}
+            className="flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-400 shadow-lg"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          </button>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="relative z-40 flex items-center justify-center w-14 h-14 rounded-full bg-blue-600 text-white shadow-xl shadow-blue-900/20 active:scale-95 transition-transform"
+        >
+          <div className={`transition-transform duration-300 flex items-center justify-center absolute inset-0 ${isMobileMenuOpen ? 'rotate-90 opacity-0 scale-50' : 'rotate-0 opacity-100 scale-100'}`}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+          </div>
+          <div className={`transition-transform duration-300 flex items-center justify-center absolute inset-0 ${isMobileMenuOpen ? 'rotate-0 opacity-100 scale-100' : '-rotate-90 opacity-0 scale-50'}`}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </div>
+        </button>
       </div>
     </main>
   );

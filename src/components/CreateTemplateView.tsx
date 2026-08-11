@@ -52,6 +52,7 @@ export function CreateTemplateView({ onNavigate, editingTemplateId, intent = 'ho
   const [templateName, setTemplateName] = useState('');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   const [pendingHeaderLevel, setPendingHeaderLevel] = useState<1 | 2 | 3 | null>(null);
   const [pendingTextType, setPendingTextType] = useState<'short' | 'short-label' | 'long' | 'long-label' | null>(null);
@@ -393,7 +394,7 @@ export function CreateTemplateView({ onNavigate, editingTemplateId, intent = 'ho
         </div>
 
         {/* Action Buttons */}
-        <div className="sticky bottom-6 z-20 flex justify-between items-center bg-white/90 dark:bg-slate-900/90 backdrop-blur-md p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/20 dark:shadow-black/40 mt-8">
+        <div className="hidden min-[400px]:flex sticky bottom-6 z-20 justify-between items-center bg-white/90 dark:bg-slate-900/90 backdrop-blur-md p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/20 dark:shadow-black/40 mt-8">
           <div>
             {editingTemplateId && (
               <button
@@ -770,6 +771,49 @@ export function CreateTemplateView({ onNavigate, editingTemplateId, intent = 'ho
           </div>
         </div>
       )}
+      {/* Mobile FAB Menu */}
+      <div className="flex min-[400px]:hidden fixed bottom-6 right-6 z-30 flex-col items-end gap-3">
+        {isMobileMenuOpen && (
+          <div 
+            className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-30" 
+            onClick={() => setIsMobileMenuOpen(false)}
+          ></div>
+        )}
+        
+        <div className={`relative z-40 flex flex-col items-end gap-3 transition-all duration-300 origin-bottom ${isMobileMenuOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-50 pointer-events-none'}`}>
+          {editingTemplateId && (
+            <button
+              type="button"
+              onClick={() => { handleDeleteTemplateClick(); setIsMobileMenuOpen(false); }}
+              className="flex items-center justify-center w-12 h-12 rounded-full bg-red-100 text-red-600 dark:bg-red-900/50 dark:text-red-400 shadow-lg"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
+            </button>
+          )}
+          
+          <button
+            type="button"
+            onClick={() => { handleSaveTemplate(); setIsMobileMenuOpen(false); }}
+            className={`flex items-center justify-center w-12 h-12 rounded-full shadow-lg ${!templateName.trim() || blocks.length === 0 ? 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-600' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-400'}`}
+            disabled={!templateName.trim() || blocks.length === 0}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          </button>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="relative z-40 flex items-center justify-center w-14 h-14 rounded-full bg-blue-600 text-white shadow-xl shadow-blue-900/20 active:scale-95 transition-transform"
+        >
+          <div className={`transition-transform duration-300 flex items-center justify-center absolute inset-0 ${isMobileMenuOpen ? 'rotate-90 opacity-0 scale-50' : 'rotate-0 opacity-100 scale-100'}`}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+          </div>
+          <div className={`transition-transform duration-300 flex items-center justify-center absolute inset-0 ${isMobileMenuOpen ? 'rotate-0 opacity-100 scale-100' : '-rotate-90 opacity-0 scale-50'}`}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </div>
+        </button>
+      </div>
     </main>
   );
 }

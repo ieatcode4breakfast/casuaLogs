@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getLogs, deleteLog, type Log } from '../services/logService';
 import { ViewHeader } from './ViewHeader';
+import { formatLogToMarkdown, copyToClipboard } from '../utils/clipboard';
 
 interface ViewLogViewProps {
   onNavigate: (view: 'home' | 'create-template' | 'select-template' | 'create-log' | 'view-log' | 'edit-log', id?: string) => void;
@@ -11,6 +12,7 @@ export function ViewLogView({ onNavigate, logId }: ViewLogViewProps) {
   const [log, setLog] = useState<Log | null>(null);
   const [loading, setLoading] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -41,6 +43,19 @@ export function ViewLogView({ onNavigate, logId }: ViewLogViewProps) {
       setShowDeleteModal(false);
     }
   };
+
+  const handleCopy = async () => {
+    if (!log) return;
+    const text = formatLogToMarkdown(log.title, log.blocks);
+    const success = await copyToClipboard(text);
+    if (success) {
+      setToastMessage("Copied to clipboard!");
+    } else {
+      setToastMessage("Failed to copy");
+    }
+    setTimeout(() => setToastMessage(null), 3000);
+  };
+
 
   if (loading) {
     return (
@@ -140,7 +155,7 @@ export function ViewLogView({ onNavigate, logId }: ViewLogViewProps) {
           </div>
         </div>
 
-        <div className="sticky bottom-6 z-20 flex justify-between items-center bg-white/90 dark:bg-slate-900/90 backdrop-blur-md p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/20 dark:shadow-black/40 mt-8">
+        <div className="hidden min-[400px]:flex sticky bottom-6 z-20 justify-between items-center bg-white/90 dark:bg-slate-900/90 backdrop-blur-md p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/20 dark:shadow-black/40 mt-8">
           <button
             type="button"
             onClick={() => setShowDeleteModal(true)}
@@ -149,14 +164,25 @@ export function ViewLogView({ onNavigate, logId }: ViewLogViewProps) {
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
             <span>Delete</span>
           </button>
-          <button
-            type="button"
-            onClick={() => onNavigate('edit-log', logId)}
-            className="cursor-pointer px-6 py-2.5 rounded-xl font-semibold bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 transition-colors"
-          >
-            Edit
-          </button>
+          
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={handleCopy}
+              className="cursor-pointer px-6 py-2.5 rounded-xl font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors"
+            >
+              Copy
+            </button>
+            <button
+              type="button"
+              onClick={() => onNavigate('edit-log', logId)}
+              className="cursor-pointer px-6 py-2.5 rounded-xl font-semibold bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 transition-colors"
+            >
+              Edit
+            </button>
+          </div>
         </div>
+        
       </div>
 
       {/* Toast Notification */}
@@ -202,6 +228,57 @@ export function ViewLogView({ onNavigate, logId }: ViewLogViewProps) {
           </div>
         </div>
       )}
+      {/* Mobile FAB Menu */}
+      <div className="flex min-[400px]:hidden fixed bottom-6 right-6 z-30 flex-col items-end gap-3">
+        {/* Backdrop for mobile menu */}
+        {isMobileMenuOpen && (
+          <div 
+            className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-30" 
+            onClick={() => setIsMobileMenuOpen(false)}
+          ></div>
+        )}
+        
+        {/* Action Buttons */}
+        <div className={`relative z-40 flex flex-col items-end gap-3 transition-all duration-300 origin-bottom ${isMobileMenuOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-50 pointer-events-none'}`}>
+          <button
+            type="button"
+            onClick={() => { setShowDeleteModal(true); setIsMobileMenuOpen(false); }}
+            className="flex items-center justify-center w-12 h-12 rounded-full bg-red-100 text-red-600 dark:bg-red-900/50 dark:text-red-400 shadow-lg"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
+          </button>
+          
+          <button
+            type="button"
+            onClick={() => { handleCopy(); setIsMobileMenuOpen(false); }}
+            className="flex items-center justify-center w-12 h-12 rounded-full bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 shadow-lg"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+          </button>
+          
+          <button
+            type="button"
+            onClick={() => { onNavigate('edit-log', logId); setIsMobileMenuOpen(false); }}
+            className="flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-400 shadow-lg"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"/></svg>
+          </button>
+        </div>
+
+        {/* Toggle Button */}
+        <button
+          type="button"
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="relative z-40 flex items-center justify-center w-14 h-14 rounded-full bg-blue-600 text-white shadow-xl shadow-blue-900/20 active:scale-95 transition-transform"
+        >
+          <div className={`transition-transform duration-300 flex items-center justify-center absolute inset-0 ${isMobileMenuOpen ? 'rotate-90 opacity-0 scale-50' : 'rotate-0 opacity-100 scale-100'}`}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+          </div>
+          <div className={`transition-transform duration-300 flex items-center justify-center absolute inset-0 ${isMobileMenuOpen ? 'rotate-0 opacity-100 scale-100' : '-rotate-90 opacity-0 scale-50'}`}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </div>
+        </button>
+      </div>
     </main>
   );
 }
