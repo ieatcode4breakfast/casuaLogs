@@ -30,6 +30,7 @@ export type TemplateBlock = HeaderBlock | TextBlock | ParagraphBlock | Checklist
 export type TemplateAction =
   | { type: 'SET_BLOCKS'; payload: TemplateBlock[] }
   | { type: 'ADD_BLOCK'; payload: TemplateBlock }
+  | { type: 'INSERT_BLOCK'; payload: { afterId: string; block: TemplateBlock } }
   | { type: 'UPDATE_BLOCK'; payload: { id: string; text: string; items?: string[] } }
   | { type: 'DELETE_BLOCK'; payload: { id: string } }
   | { type: 'REORDER_BLOCKS'; payload: { fromIndex: number; toIndex: number } };
@@ -41,7 +42,16 @@ export function templateReducer(state: TemplateBlock[], action: TemplateAction):
       
     case 'ADD_BLOCK':
       return [...state, action.payload];
-      
+
+    case 'INSERT_BLOCK': {
+      const { afterId, block } = action.payload;
+      const index = state.findIndex(b => b.id === afterId);
+      if (index === -1) return [...state, block];
+      const copy = [...state];
+      copy.splice(index + 1, 0, block);
+      return copy;
+    }
+
     case 'UPDATE_BLOCK':
       return state.map(block => {
         if (block.id !== action.payload.id) return block;

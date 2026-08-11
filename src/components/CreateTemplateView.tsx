@@ -1,11 +1,11 @@
-import { useState, useReducer, useEffect } from 'react';
+import { useState, useReducer, useEffect, Fragment } from 'react';
 import { get } from 'idb-keyval';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-import { templateReducer } from '../reducers/templateReducer';
+import { templateReducer, type TemplateBlock } from '../reducers/templateReducer';
 import { saveTemplate, deleteTemplate } from '../services/templateService';
 import { ViewHeader } from './ViewHeader';
 
@@ -43,6 +43,7 @@ export function CreateTemplateView({ onNavigate, editingTemplateId, intent = 'ho
   const [menuState, setMenuState] = useState<'closed' | 'main' | 'header' | 'text' | 'configure-header' | 'configure-text' | 'configure-paragraph' | 'checklist' | 'configure-checklist'>('closed');
   const [blocks, dispatch] = useReducer(templateReducer, []);
   const [editingBlockId, setEditingBlockId] = useState<string | null>(null);
+  const [insertAfterId, setInsertAfterId] = useState<string | null>(null);
   const [templateName, setTemplateName] = useState('');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -85,6 +86,11 @@ export function CreateTemplateView({ onNavigate, editingTemplateId, intent = 'ho
     }
   };
 
+  const handleInsertAfter = (id: string) => {
+    setInsertAfterId(id);
+    setMenuState('main');
+  };
+
   const handleDeleteTemplateClick = () => {
     setShowDeleteModal(true);
   };
@@ -120,42 +126,45 @@ export function CreateTemplateView({ onNavigate, editingTemplateId, intent = 'ho
 
   const confirmAddHeader = () => {
     if (!pendingBlockText.trim() || !pendingHeaderLevel) return;
-    dispatch({
-      type: 'ADD_BLOCK',
-      payload: {
-        id: crypto.randomUUID(),
-        type: 'header',
-        level: pendingHeaderLevel,
-        text: pendingBlockText.trim()
-      }
-    });
+    const block: TemplateBlock = {
+      id: crypto.randomUUID(),
+      type: 'header',
+      level: pendingHeaderLevel,
+      text: pendingBlockText.trim()
+    };
+    dispatch(insertAfterId
+      ? { type: 'INSERT_BLOCK', payload: { afterId: insertAfterId, block } }
+      : { type: 'ADD_BLOCK', payload: block });
+    setInsertAfterId(null);
     setMenuState('closed');
   };
 
   const confirmAddText = () => {
     if (!pendingTextType) return;
-    dispatch({
-      type: 'ADD_BLOCK',
-      payload: {
-        id: crypto.randomUUID(),
-        type: 'text',
-        inputType: pendingTextType as 'short' | 'long',
-        label: pendingBlockText.trim()
-      }
-    });
+    const block: TemplateBlock = {
+      id: crypto.randomUUID(),
+      type: 'text',
+      inputType: pendingTextType as 'short' | 'long',
+      label: pendingBlockText.trim()
+    };
+    dispatch(insertAfterId
+      ? { type: 'INSERT_BLOCK', payload: { afterId: insertAfterId, block } }
+      : { type: 'ADD_BLOCK', payload: block });
+    setInsertAfterId(null);
     setMenuState('closed');
   };
 
   const confirmAddParagraph = () => {
     if (!pendingBlockText.trim()) return;
-    dispatch({
-      type: 'ADD_BLOCK',
-      payload: {
-        id: crypto.randomUUID(),
-        type: 'paragraph',
-        text: pendingBlockText.trim()
-      }
-    });
+    const block: TemplateBlock = {
+      id: crypto.randomUUID(),
+      type: 'paragraph',
+      text: pendingBlockText.trim()
+    };
+    dispatch(insertAfterId
+      ? { type: 'INSERT_BLOCK', payload: { afterId: insertAfterId, block } }
+      : { type: 'ADD_BLOCK', payload: block });
+    setInsertAfterId(null);
     setMenuState('closed');
   };
 
@@ -168,15 +177,16 @@ export function CreateTemplateView({ onNavigate, editingTemplateId, intent = 'ho
   const confirmAddChecklist = () => {
     const items = pendingBlockText.split('\n').map(i => i.trim()).filter(i => i.length > 0);
     if (items.length === 0) return;
-    dispatch({
-      type: 'ADD_BLOCK',
-      payload: {
-        id: crypto.randomUUID(),
-        type: 'checklist',
-        label: pendingBlockLabel.trim(),
-        items
-      }
-    });
+    const block: TemplateBlock = {
+      id: crypto.randomUUID(),
+      type: 'checklist',
+      label: pendingBlockLabel.trim(),
+      items
+    };
+    dispatch(insertAfterId
+      ? { type: 'INSERT_BLOCK', payload: { afterId: insertAfterId, block } }
+      : { type: 'ADD_BLOCK', payload: block });
+    setInsertAfterId(null);
     setMenuState('closed');
   };
 
@@ -251,8 +261,9 @@ export function CreateTemplateView({ onNavigate, editingTemplateId, intent = 'ho
             <DndContext sensors={sensors} collisionDetection={closestCenter} modifiers={[restrictToVerticalAxis]} onDragEnd={handleDragEnd}>
               <div className="flex flex-col w-full mb-2">
                 <SortableContext items={blocks.map(b => b.id)} strategy={verticalListSortingStrategy}>
-                  {blocks.map(block => (
-                    <SortableBlockItem key={block.id} id={block.id} isEditing={editingBlockId === block.id}>
+                  {blocks.map((block, index) => (
+                    <Fragment key={block.id}>
+                    <SortableBlockItem id={block.id} isEditing={editingBlockId === block.id}>
                       {(dragProps: any) => (
                         <div 
                           onClick={() => {
@@ -336,6 +347,23 @@ export function CreateTemplateView({ onNavigate, editingTemplateId, intent = 'ho
                         </div>
                       )}
                     </SortableBlockItem>
+                    {index < blocks.length - 1 && (
+                      <button
+                        type="button"
+                        onClick={() => handleInsertAfter(block.id)}
+                        aria-label={`Insert block after ${block.type}`}
+                        className="group flex items-center justify-center w-full min-h-10 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
+                      >
+                        <span className="flex items-center gap-2 w-full">
+                          <span className="flex-1 h-px bg-slate-200 dark:bg-slate-800 group-hover:bg-blue-400/50 transition-colors" />
+                          <span className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 group-hover:bg-blue-600 group-hover:text-white flex items-center justify-center transition-all shrink-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                          </span>
+                          <span className="flex-1 h-px bg-slate-200 dark:bg-slate-800 group-hover:bg-blue-400/50 transition-colors" />
+                        </span>
+                      </button>
+                    )}
+                  </Fragment>
                   ))}
                 </SortableContext>
               </div>
@@ -346,7 +374,10 @@ export function CreateTemplateView({ onNavigate, editingTemplateId, intent = 'ho
           <div className="relative flex flex-col items-center mt-2">
             <button
               type="button"
-              onClick={() => setMenuState(menuState === 'closed' ? 'main' : 'closed')}
+              onClick={() => {
+                setInsertAfterId(null);
+                setMenuState(menuState === 'closed' ? 'main' : 'closed');
+              }}
               className="cursor-pointer group relative inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all duration-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 active:scale-95 shadow-sm"
             >
               <svg className={`transition-transform duration-300 ${menuState !== 'closed' ? 'rotate-45' : 'group-hover:rotate-90'}`} xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
@@ -499,6 +530,7 @@ export function CreateTemplateView({ onNavigate, editingTemplateId, intent = 'ho
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/20 dark:bg-black/40 backdrop-blur-sm"
           onMouseDown={(e) => {
             if (e.target === e.currentTarget) {
+              setInsertAfterId(null);
               setMenuState('closed');
             }
           }}
@@ -511,7 +543,10 @@ export function CreateTemplateView({ onNavigate, editingTemplateId, intent = 'ho
                 Choose a Block
               </h3>
               <button 
-                onClick={() => setMenuState('closed')}
+                onClick={() => {
+                  setInsertAfterId(null);
+                  setMenuState('closed');
+                }}
                 className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg transition-colors cursor-pointer"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
