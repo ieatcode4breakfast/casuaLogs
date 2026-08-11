@@ -1,6 +1,6 @@
 import { useState, useReducer, useEffect, Fragment } from 'react';
 import { get } from 'idb-keyval';
-import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
+import { DndContext, rectIntersection, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent, type CollisionDetection } from '@dnd-kit/core';
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -38,6 +38,11 @@ function SortableBlockItem({ id, isEditing, children }: { id: string; isEditing:
     </div>
   );
 }
+
+const customEdgeCollision: CollisionDetection = (args) => {
+  const intersections = rectIntersection(args);
+  return intersections.filter(i => i.id !== args.active.id);
+};
 
 export function CreateTemplateView({ onNavigate, editingTemplateId, intent = 'home' }: CreateTemplateViewProps) {
   const [menuState, setMenuState] = useState<'closed' | 'main' | 'header' | 'text' | 'configure-header' | 'configure-text' | 'configure-paragraph' | 'checklist' | 'configure-checklist'>('closed');
@@ -258,7 +263,7 @@ export function CreateTemplateView({ onNavigate, editingTemplateId, intent = 'ho
           )}
 
           {blocks.length > 0 && (
-            <DndContext sensors={sensors} collisionDetection={closestCenter} modifiers={[restrictToVerticalAxis]} onDragEnd={handleDragEnd}>
+            <DndContext sensors={sensors} collisionDetection={customEdgeCollision} modifiers={[restrictToVerticalAxis]} onDragEnd={handleDragEnd}>
               <div className="flex flex-col w-full mb-2">
                 <SortableContext items={blocks.map(b => b.id)} strategy={verticalListSortingStrategy}>
                   {blocks.map((block, index) => (
