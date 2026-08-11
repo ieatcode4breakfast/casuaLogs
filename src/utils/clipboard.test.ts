@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { formatLogToMarkdown } from './clipboard';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { formatLogToMarkdown, copyToClipboard } from './clipboard';
 import { type LogBlock } from '../services/logService';
 
 describe('formatLogToMarkdown', () => {
@@ -45,5 +45,42 @@ describe('formatLogToMarkdown', () => {
     }];
     const result = formatLogToMarkdown('My Log', blocks);
     expect(result).toBe('# My Log\n\n**Tasks**\n- [x] Task 1\n- [ ] Task 2');
+  });
+});
+
+describe('copyToClipboard', () => {
+  const originalClipboard = navigator.clipboard;
+
+  beforeEach(() => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    Object.assign(navigator, { clipboard: originalClipboard });
+  });
+
+  it('returns true on successful copy', async () => {
+    const writeTextMock = vi.fn().mockResolvedValue(undefined);
+    Object.assign(navigator, {
+      clipboard: { writeText: writeTextMock }
+    });
+
+    const result = await copyToClipboard('Test text');
+    expect(writeTextMock).toHaveBeenCalledWith('Test text');
+    expect(result).toBe(true);
+  });
+
+  it('returns false and logs error on failure', async () => {
+    const error = new Error('Clipboard error');
+    const writeTextMock = vi.fn().mockRejectedValue(error);
+    Object.assign(navigator, {
+      clipboard: { writeText: writeTextMock }
+    });
+
+    const result = await copyToClipboard('Test text');
+    expect(writeTextMock).toHaveBeenCalledWith('Test text');
+    expect(console.error).toHaveBeenCalledWith('Failed to copy text: ', error);
+    expect(result).toBe(false);
   });
 });
