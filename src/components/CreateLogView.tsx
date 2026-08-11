@@ -161,7 +161,7 @@ export function CreateLogView({ onNavigate, templateId, editingLogId }: CreateLo
             const sizeClass = block.level === 1 ? 'text-2xl' : block.level === 2 ? 'text-xl' : 'text-lg';
             return (
               <div key={block.id} className="py-2">
-                <HTag className={`${sizeClass} font-bold text-slate-900 dark:text-white break-words`}>
+                <HTag className={`${sizeClass} font-bold text-slate-900 dark:text-white wrap-break-word`}>
                   {block.text || 'Untitled Header'}
                 </HTag>
               </div>
@@ -171,7 +171,7 @@ export function CreateLogView({ onNavigate, templateId, editingLogId }: CreateLo
           if (block.type === 'paragraph') {
             return (
               <div key={block.id} className="py-2">
-                <p className="text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap break-words">
+                <p className="text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap wrap-break-word">
                   {block.text || 'Empty paragraph...'}
                 </p>
               </div>
@@ -181,7 +181,7 @@ export function CreateLogView({ onNavigate, templateId, editingLogId }: CreateLo
           if (block.type === 'text') {
             return (
               <div key={block.id} className="py-2 flex flex-col gap-2">
-                <label htmlFor={`input-${block.id}`} className="text-sm font-semibold text-slate-700 dark:text-slate-300 break-words">
+                <label htmlFor={`input-${block.id}`} className="text-sm font-semibold text-slate-700 dark:text-slate-300 wrap-break-word">
                   {block.label}
                 </label>
                 {block.inputType === 'short' ? (
@@ -229,7 +229,7 @@ export function CreateLogView({ onNavigate, templateId, editingLogId }: CreateLo
             return (
               <div key={block.id} className="py-2 flex flex-col gap-2">
                 {block.label && (
-                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 break-words">
+                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 wrap-break-word">
                     {block.label}
                   </label>
                 )}
@@ -246,7 +246,7 @@ export function CreateLogView({ onNavigate, templateId, editingLogId }: CreateLo
                           <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                         )}
                       </span>
-                      <span className={`text-sm break-words line-clamp-2 text-left ${item.checked ? 'text-slate-400 line-through' : 'text-slate-700 dark:text-slate-300'}`}>
+                      <span className={`text-sm wrap-break-word line-clamp-2 text-left ${item.checked ? 'text-slate-400 line-through' : 'text-slate-700 dark:text-slate-300'}`}>
                         {item.text}
                       </span>
                     </button>

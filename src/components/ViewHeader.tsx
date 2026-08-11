@@ -10,7 +10,7 @@ export function ViewHeader({ title, onBack, backTitle = "Go back" }: ViewHeaderP
       <button
         type="button"
         onClick={onBack}
-        className="cursor-pointer p-2 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/50 flex-shrink-0"
+        className="cursor-pointer p-2 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/50 shrink-0"
         title={backTitle}
         aria-label={backTitle}
       >
@@ -19,7 +19,7 @@ export function ViewHeader({ title, onBack, backTitle = "Go back" }: ViewHeaderP
           <polyline points="12 19 5 12 12 5" />
         </svg>
       </button>
-      <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white line-clamp-2 break-words">
+      <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white line-clamp-2 wrap-break-word">
         {title}
       </h2>
     </div>

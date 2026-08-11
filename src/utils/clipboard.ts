@@ -13,7 +13,7 @@ export function formatLogToMarkdown(title: string, blocks: LogBlock[]): string {
     } else if (block.type === 'paragraph') {
       text += `${block.text || ''}\n\n`;
     } else if (block.type === 'text') {
-      text += `**${block.label}**\n${block.value || 'No entry'}\n\n`;
+      text += `**${block.label}**\n${block.value || ''}\n\n`;
     } else if (block.type === 'checklist') {
       if (block.label) {
         text += `**${block.label}**\n`;

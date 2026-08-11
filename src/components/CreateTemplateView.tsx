@@ -309,19 +309,19 @@ export function CreateTemplateView({ onNavigate, editingTemplateId, intent = 'ho
                           )}
                           <div className="flex flex-col gap-2 w-full min-w-0 pr-2">
                             {block.type === 'header' && (
-                              <div className={`w-full break-words whitespace-pre-wrap text-slate-900 dark:text-white ${block.level === 1 ? 'text-3xl font-black tracking-tight' : block.level === 2 ? 'text-2xl font-bold tracking-tight' : 'text-xl font-bold'}`}>
+                              <div className={`w-full wrap-break-word whitespace-pre-wrap text-slate-900 dark:text-white ${block.level === 1 ? 'text-3xl font-black tracking-tight' : block.level === 2 ? 'text-2xl font-bold tracking-tight' : 'text-xl font-bold'}`}>
                                 {block.text}
                               </div>
                             )}
                             {block.type === 'paragraph' && (
-                              <div className="w-full break-words whitespace-pre-wrap text-slate-700 dark:text-slate-300 text-sm md:text-base leading-relaxed">
+                              <div className="w-full wrap-break-word whitespace-pre-wrap text-slate-700 dark:text-slate-300 text-sm md:text-base leading-relaxed">
                                 {block.text}
                               </div>
                             )}
                             {block.type === 'text' && (
                               <div className="w-full flex flex-col gap-2 pointer-events-none min-w-0">
                                 {block.label && (
-                                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1 break-words whitespace-pre-wrap w-full">
+                                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1 wrap-break-word whitespace-pre-wrap w-full">
                                     {block.label}
                                   </label>
                                 )}
@@ -335,7 +335,7 @@ export function CreateTemplateView({ onNavigate, editingTemplateId, intent = 'ho
                             {block.type === 'checklist' && (
                               <div className="w-full flex flex-col gap-2 pointer-events-none min-w-0">
                                 {block.label && (
-                                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1 break-words whitespace-pre-wrap w-full">
+                                  <label className="text-sm font-semibold text-slate-700 dark:text-slate-300 ml-1 wrap-break-word whitespace-pre-wrap w-full">
                                     {block.label}
                                   </label>
                                 )}
@@ -343,7 +343,7 @@ export function CreateTemplateView({ onNavigate, editingTemplateId, intent = 'ho
                                   {block.items.map((item, i) => (
                                     <div key={i} className="flex items-start gap-2.5 bg-slate-50/50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2">
                                       <div className="w-4 h-4 mt-0.5 shrink-0 rounded border-2 border-slate-300 dark:border-slate-600"></div>
-                                      <span className="text-sm text-slate-600 dark:text-slate-300 break-words line-clamp-2 text-left">{item}</span>
+                                      <span className="text-sm text-slate-600 dark:text-slate-300 wrap-break-word line-clamp-2 text-left">{item}</span>
                                     </div>
                                   ))}
                                 </div>

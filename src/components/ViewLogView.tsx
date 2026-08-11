@@ -94,7 +94,7 @@ export function ViewLogView({ onNavigate, logId }: ViewLogViewProps) {
                 const sizeClass = block.level === 1 ? 'text-2xl' : block.level === 2 ? 'text-xl' : 'text-lg';
                 return (
                   <div key={block.id} className="py-3">
-                    <HTag className={`${sizeClass} font-bold text-slate-900 dark:text-white break-words`}>
+                    <HTag className={`${sizeClass} font-bold text-slate-900 dark:text-white wrap-break-word`}>
                       {block.text}
                     </HTag>
                   </div>
@@ -104,7 +104,7 @@ export function ViewLogView({ onNavigate, logId }: ViewLogViewProps) {
               if (block.type === 'paragraph') {
                 return (
                   <div key={block.id} className="py-2">
-                    <p className="text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed break-words">
+                    <p className="text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed wrap-break-word">
                       {block.text}
                     </p>
                   </div>
@@ -114,11 +114,11 @@ export function ViewLogView({ onNavigate, logId }: ViewLogViewProps) {
               if (block.type === 'text') {
                 return (
                   <div key={block.id} className="py-3 flex flex-col gap-1">
-                    <h4 className="text-sm font-semibold text-slate-500 dark:text-slate-400 break-words">
+                    <h4 className="text-sm font-semibold text-slate-500 dark:text-slate-400 wrap-break-word">
                       {block.label}
                     </h4>
-                    <p className="text-slate-900 dark:text-white whitespace-pre-wrap leading-relaxed break-words">
-                      {block.value || <span className="text-slate-400 italic">No entry</span>}
+                    <p className="text-slate-900 dark:text-white whitespace-pre-wrap leading-relaxed wrap-break-word min-h-[1.5em]">
+                      {block.value}
                     </p>
                   </div>
                 );
@@ -128,7 +128,7 @@ export function ViewLogView({ onNavigate, logId }: ViewLogViewProps) {
                 return (
                   <div key={block.id} className="py-3 flex flex-col gap-2">
                     {block.label && (
-                      <h4 className="text-sm font-semibold text-slate-500 dark:text-slate-400 break-words">
+                      <h4 className="text-sm font-semibold text-slate-500 dark:text-slate-400 wrap-break-word">
                         {block.label}
                       </h4>
                     )}
@@ -140,7 +140,7 @@ export function ViewLogView({ onNavigate, logId }: ViewLogViewProps) {
                               <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                             )}
                           </span>
-                          <span className={`text-sm break-words line-clamp-2 text-left ${item.checked ? 'text-slate-400 line-through' : 'text-slate-700 dark:text-slate-300'}`}>
+                          <span className={`text-sm wrap-break-word line-clamp-2 text-left ${item.checked ? 'text-slate-400 line-through' : 'text-slate-700 dark:text-slate-300'}`}>
                             {item.text}
                           </span>
                         </div>
