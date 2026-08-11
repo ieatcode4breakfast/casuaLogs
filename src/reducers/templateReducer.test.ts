@@ -126,4 +126,68 @@ describe('templateReducer', () => {
     const newState = templateReducer(state, action);
     expect(newState.map(b => b.id)).toEqual(['2', '3', '1']);
   });
+
+  test('inserts a block after the specified block', () => {
+    const state: TemplateBlock[] = [
+      { id: '1', type: 'header', level: 1, text: 'A' },
+      { id: '2', type: 'header', level: 1, text: 'B' },
+      { id: '3', type: 'header', level: 1, text: 'C' }
+    ];
+    const action = {
+      type: 'INSERT_BLOCK' as const,
+      payload: {
+        afterId: '1',
+        block: { id: '4', type: 'header', level: 1, text: 'D' } as const
+      }
+    };
+    const newState = templateReducer(state, action);
+    expect(newState.map(b => b.id)).toEqual(['1', '4', '2', '3']);
+  });
+
+  test('inserts a block after the last block', () => {
+    const state: TemplateBlock[] = [
+      { id: '1', type: 'header', level: 1, text: 'A' },
+      { id: '2', type: 'header', level: 1, text: 'B' }
+    ];
+    const action = {
+      type: 'INSERT_BLOCK' as const,
+      payload: {
+        afterId: '2',
+        block: { id: '3', type: 'paragraph', text: 'C' } as const
+      }
+    };
+    const newState = templateReducer(state, action);
+    expect(newState.map(b => b.id)).toEqual(['1', '2', '3']);
+  });
+
+  test('appends when afterId is not found', () => {
+    const state: TemplateBlock[] = [
+      { id: '1', type: 'header', level: 1, text: 'A' }
+    ];
+    const action = {
+      type: 'INSERT_BLOCK' as const,
+      payload: {
+        afterId: 'missing',
+        block: { id: '2', type: 'paragraph', text: 'B' } as const
+      }
+    };
+    const newState = templateReducer(state, action);
+    expect(newState.map(b => b.id)).toEqual(['1', '2']);
+  });
+
+  test('insert does not mutate the original state', () => {
+    const state: TemplateBlock[] = [
+      { id: '1', type: 'header', level: 1, text: 'A' },
+      { id: '2', type: 'header', level: 1, text: 'B' }
+    ];
+    const action = {
+      type: 'INSERT_BLOCK' as const,
+      payload: {
+        afterId: '1',
+        block: { id: '3', type: 'paragraph', text: 'C' } as const
+      }
+    };
+    templateReducer(state, action);
+    expect(state.map(b => b.id)).toEqual(['1', '2']);
+  });
 });
